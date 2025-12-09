@@ -40,6 +40,7 @@ func main() {
 	authService := service.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 	userService := service.NewUserService(userRepo, addrRepo)
 	catalogService := service.NewCatalogService(productRepo, categoryRepo, variantRepo, database.DB)
+	marketingService := service.NewMarketingService(database.DB)
 	cartService := service.NewCartService(marketingService)
 	inventoryService := service.NewInventoryService(stockRepo, movementRepo, database.DB)
 	orderService := service.NewOrderService(orderRepo, inventoryService, database.DB)
@@ -47,7 +48,6 @@ func main() {
 	assemblyService := service.NewAssemblyService()
 	procurementService := service.NewProcurementService(poRepo, supplierRepo)
 	financeService := service.NewFinanceService()
-	marketingService := service.NewMarketingService(database.DB)
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(authService)
