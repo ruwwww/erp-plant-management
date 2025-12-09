@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # ==========================================
@@ -19,50 +19,59 @@ services:
   # ==========================================
   # APPLICATION FLEETS
   # ==========================================
-  
+
   # 1. Customer Fleet (Storefront)
   api_store:
     build: ./server
     environment:
       - APP_MODULE=store
-      - DB_WRITE_HOST=db_primary
-      - DB_READ_HOST=db_replica  # Read from Replica
+      - DB_HOST=db_primary
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=plantshop
+      - DB_PORT=5432
     networks:
       - frontend_net
       - backend_net
     deploy:
-      replicas: 2  # Dev: 2 instances
+      replicas: 2 # Dev: 2 instances
 
   # 2. POS Fleet (Cashiers)
   api_pos:
     build: ./server
     environment:
       - APP_MODULE=pos
-      - DB_WRITE_HOST=db_primary
-      - DB_READ_HOST=db_primary  # POS reads from Primary (Needs real-time)
+      - DB_HOST=db_primary
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=plantshop
+      - DB_PORT=5432
     networks:
       - frontend_net
       - backend_net
-    deploy:
-      replicas: 1  # Dev: 1 instance
-
   # 3. Internal Fleet (Admin/Ops)
   api_internal:
     build: ./server
     environment:
       - APP_MODULE=internal
+      - DB_HOST=db_primary
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=plantshop
+      - DB_PORT=5432
+      - APP_MODULE=internal
       - DB_WRITE_HOST=db_primary
-      - DB_READ_HOST=db_primary  # Admin reads from Primary
+      - DB_READ_HOST=db_primary # Admin reads from Primary
     networks:
       - frontend_net
       - backend_net
     deploy:
-      replicas: 2  # Dev: 2 instances
+      replicas: 2 # Dev: 2 instances
 
   # ==========================================
   # DATA LAYER
   # ==========================================
-  
+
   # WRITE Database
   db_primary:
     image: postgres:15-alpine
@@ -76,7 +85,7 @@ services:
       - backend_net
 
   # READ Database (Simulation for Dev)
-  # In Prod, this needs a replication script. In Dev, we just spin up a 2nd DB 
+  # In Prod, this needs a replication script. In Dev, we just spin up a 2nd DB
   # or point the app to the primary if you don't want to config replication locally.
   db_replica:
     image: postgres:15-alpine
@@ -109,7 +118,7 @@ services:
 # ==========================================
 networks:
   frontend_net: # Gateway <-> Apps
-  backend_net:  # Apps <-> DB/Redis (Gateway cannot see this)
+  backend_net: # Apps <-> DB/Redis (Gateway cannot see this)
 
 volumes:
   pg_data_primary:
