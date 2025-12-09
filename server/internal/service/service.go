@@ -93,9 +93,10 @@ type CatalogService interface {
 }
 
 type MediaService interface {
-	Upload(ctx context.Context, file []byte, filename string, mimeType string) (*domain.MediaAsset, error)
-	LinkMedia(ctx context.Context, mediaID int, entityType string, entityID int, zone string) error
+	InitiateUpload(ctx context.Context, filename string, mimeType string, sizeBytes int64) (*domain.MediaAsset, string, error) // Returns asset and signed PUT URL
+	LinkMedia(ctx context.Context, mediaIDs []int, entityType string, entityID int, zone string) error
 	UnlinkMedia(ctx context.Context, mediaID int, entityType string, entityID int) error
+	GetSignedURL(ctx context.Context, mediaID int) (string, error) // For GET access
 }
 
 // ==========================================

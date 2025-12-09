@@ -37,6 +37,8 @@ func main() {
 	cashMoveRepo := repository.NewGormRepository[domain.POSCashMove](database.DB)
 	poRepo := repository.NewGormRepository[domain.PurchaseOrder](database.DB)
 	supplierRepo := repository.NewSupplierRepository(database.DB)
+	mediaRepo := repository.NewMediaRepository(database.DB)
+	mediaLinkRepo := repository.NewMediaLinkRepository(database.DB)
 
 	// Services
 	authService := service.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
@@ -50,6 +52,10 @@ func main() {
 	assemblyService := service.NewAssemblyService()
 	procurementService := service.NewProcurementService(poRepo, supplierRepo)
 	financeService := service.NewFinanceService()
+	mediaService, err := service.NewMediaService(mediaRepo, mediaLinkRepo)
+	if err != nil {
+		log.Fatalf("Failed to create media service: %v", err)
+	}
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(authService)
@@ -57,7 +63,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(userService, orderService, financeService)
 	posHandler := handlers.NewPOSHandler(posService, orderService)
 	opsHandler := handlers.NewOpsHandler(inventoryService, assemblyService, procurementService)
-	adminHandler := handlers.NewAdminHandler(catalogService, authService, userService, procurementService, marketingService)
+	adminHandler := handlers.NewAdminHandler(catalogService, authService, userService, procurementService, marketingService, mediaService)
 
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{

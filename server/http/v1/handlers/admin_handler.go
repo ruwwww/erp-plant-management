@@ -18,15 +18,17 @@ type AdminHandler struct {
 	userService        service.UserService
 	procurementService service.ProcurementService
 	marketingService   service.MarketingService
+	mediaService       service.MediaService
 }
 
-func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService, userS service.UserService, procurementS service.ProcurementService, marketingS service.MarketingService) *AdminHandler {
+func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService, userS service.UserService, procurementS service.ProcurementService, marketingS service.MarketingService, mediaS service.MediaService) *AdminHandler {
 	return &AdminHandler{
 		catalogService:     catalogS,
 		authService:        authS,
 		userService:        userS,
 		procurementService: procurementS,
 		marketingService:   marketingS,
+		mediaService:       mediaS,
 	}
 }
 
@@ -162,15 +164,46 @@ func (h *AdminHandler) UpdateVariants(c *fiber.Ctx) error {
 
 // Media
 func (h *AdminHandler) UploadMedia(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	var req dto.UploadMediaRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	asset, signedURL, err := h.mediaService.InitiateUpload(c.Context(), req.Filename, req.MimeType, req.SizeBytes)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"asset":      asset,
+		"upload_url": signedURL,
+	})
 }
 
 func (h *AdminHandler) LinkMedia(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	var req dto.LinkMediaRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if err := h.mediaService.LinkMedia(c.Context(), req.MediaIDs, req.EntityType, req.EntityID, req.Zone); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Media linked successfully"})
 }
 
 func (h *AdminHandler) UnlinkMedia(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	var req dto.UnlinkMediaRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if err := h.mediaService.UnlinkMedia(c.Context(), req.MediaID, req.EntityType, req.EntityID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Media unlinked successfully"})
 }
 
 // Users

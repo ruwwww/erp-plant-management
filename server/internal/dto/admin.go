@@ -122,11 +122,23 @@ type UpdatePromotionRequest struct {
 }
 
 // --- Media ---
+type UploadMediaRequest struct {
+	Filename  string `json:"filename" validate:"required"`
+	MimeType  string `json:"mime_type" validate:"required"`
+	SizeBytes int64  `json:"size_bytes" validate:"required,min=1"`
+}
+
 type LinkMediaRequest struct {
 	MediaIDs   []int  `json:"media_ids" validate:"required"`
 	EntityType string `json:"entity_type" validate:"required,oneof=products categories"`
 	EntityID   int    `json:"entity_id" validate:"required"`
 	Zone       string `json:"zone" validate:"required"` // e.g. "gallery"
+}
+
+type UnlinkMediaRequest struct {
+	MediaID    int    `json:"media_id" validate:"required,min=1"`
+	EntityType string `json:"entity_type" validate:"required,oneof=products categories"`
+	EntityID   int    `json:"entity_id" validate:"required,min=1"`
 }
 
 type EditMediaRequest struct {
