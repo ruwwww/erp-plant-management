@@ -6,20 +6,20 @@ import (
 	"server/internal/repository"
 )
 
-type OrderService struct {
+type OrderServiceImpl struct {
 	orderRepo repository.Repository[domain.SalesOrder]
 }
 
-func NewOrderService(orderRepo repository.Repository[domain.SalesOrder]) *OrderService {
-	return &OrderService{
+func NewOrderService(orderRepo repository.Repository[domain.SalesOrder]) *OrderServiceImpl {
+	return &OrderServiceImpl{
 		orderRepo: orderRepo,
 	}
 }
 
-func (s *OrderService) CreateOrder(ctx context.Context, order *domain.SalesOrder) error {
+func (s *OrderServiceImpl) CreateOrder(ctx context.Context, order *domain.SalesOrder) error {
 	return s.orderRepo.Create(ctx, order)
 }
 
-func (s *OrderService) GetOrders(ctx context.Context) ([]domain.SalesOrder, error) {
+func (s *OrderServiceImpl) GetOrders(ctx context.Context) ([]domain.SalesOrder, error) {
 	return s.orderRepo.FindAll(ctx)
 }

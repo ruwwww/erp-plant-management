@@ -11,19 +11,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
+type AuthServiceImpl struct {
 	userRepo  repository.Repository[domain.User]
 	jwtSecret []byte
 }
 
-func NewAuthService(userRepo repository.Repository[domain.User], secret string) *AuthService {
-	return &AuthService{
+func NewAuthService(userRepo repository.Repository[domain.User], secret string) *AuthServiceImpl {
+	return &AuthServiceImpl{
 		userRepo:  userRepo,
 		jwtSecret: []byte(secret),
 	}
 }
 
-func (s *AuthService) Register(ctx context.Context, email, password string, role domain.UserRole) (*domain.User, error) {
+func (s *AuthServiceImpl) Register(ctx context.Context, email, password string, role domain.UserRole) (*domain.User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (s *AuthService) Register(ctx context.Context, email, password string, role
 	return user, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {
+func (s *AuthServiceImpl) Login(ctx context.Context, email, password string) (string, error) {
 	user, err := s.userRepo.FindOne(ctx, "email = ?", email)
 	if err != nil {
 		return "", errors.New("invalid credentials")

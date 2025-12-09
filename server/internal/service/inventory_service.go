@@ -10,25 +10,25 @@ import (
 	"gorm.io/gorm"
 )
 
-type InventoryService struct {
+type InventoryServiceImpl struct {
 	stockRepo    repository.Repository[domain.Stock]
 	movementRepo repository.Repository[domain.StockMovement]
 	db           *gorm.DB // Needed for transaction
 }
 
-func NewInventoryService(stockRepo repository.Repository[domain.Stock], movementRepo repository.Repository[domain.StockMovement], db *gorm.DB) *InventoryService {
-	return &InventoryService{
+func NewInventoryService(stockRepo repository.Repository[domain.Stock], movementRepo repository.Repository[domain.StockMovement], db *gorm.DB) *InventoryServiceImpl {
+	return &InventoryServiceImpl{
 		stockRepo:    stockRepo,
 		movementRepo: movementRepo,
 		db:           db,
 	}
 }
 
-func (s *InventoryService) GetStock(ctx context.Context, locationID, variantID int) (*domain.Stock, error) {
+func (s *InventoryServiceImpl) GetStock(ctx context.Context, locationID, variantID int) (*domain.Stock, error) {
 	return s.stockRepo.FindOne(ctx, "location_id = ? AND variant_id = ?", locationID, variantID)
 }
 
-func (s *InventoryService) AdjustStock(ctx context.Context, locationID, variantID, qtyChange int, reason string, refType *string, refID *int, userID *int) error {
+func (s *InventoryServiceImpl) AdjustStock(ctx context.Context, locationID, variantID, qtyChange int, reason string, refType *string, refID *int, userID *int) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		// 1. Create Movement
 		movement := &domain.StockMovement{
