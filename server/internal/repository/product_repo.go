@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"server/internal/core/domain"
+	"server/internal/dto"
 
 	"gorm.io/gorm"
 )
@@ -17,7 +18,7 @@ func NewProductRepository(db *gorm.DB) ProductRepository {
 
 func (r *productRepository) GetFullProduct(ctx context.Context, slug string) (*domain.Product, error) {
 	var product domain.Product
-	// Preload necessary relations
+
 	err := r.DB.WithContext(ctx).
 		Preload("Category").
 		Preload("Supplier").
@@ -26,30 +27,58 @@ func (r *productRepository) GetFullProduct(ctx context.Context, slug string) (*d
 	return &product, err
 }
 
-func (r *productRepository) Search(ctx context.Context, filter map[string]interface{}, page, limit int) ([]domain.Product, int64, error) {
+func (r *productRepository) Search(ctx context.Context, filter dto.ProductFilterParams) ([]domain.Product, int64, error) {
 	var products []domain.Product
 	var total int64
 
-	query := r.DB.WithContext(ctx).Model(&domain.Product{}).Preload("Category").Preload("Supplier")
+	query := r.DB.WithContext(ctx).Model(&domain.Product{}).
+		Preload("Category").
+		Preload("Supplier")
 
-	if search, ok := filter["search"].(string); ok && search != "" {
-		query = query.Where("name ILIKE ? OR sku ILIKE ?", "%"+search+"%", "%"+search+"%")
+	if filter.Search != "" {
+		query = query.Where("name ILIKE ? OR sku ILIKE ?", "%"+filter.Search+"%", "%"+filter.Search+"%")
 	}
-	if catSlug, ok := filter["category_slug"].(string); ok && catSlug != "" {
+
+	if filter.CategorySlug != "" {
 		query = query.Joins("JOIN categories ON categories.id = products.category_id").
-			Where("categories.slug = ?", catSlug)
-	}
-	if min, ok := filter["min_price"].(float64); ok {
-		query = query.Where("base_price >= ?", min)
-	}
-	if active, ok := filter["is_active"].(bool); ok {
-		query = query.Where("is_active = ?", active)
+			Where("categories.slug = ?", filter.CategorySlug)
 	}
 
-	query.Count(&total)
+	if filter.MinPrice > 0 {
+		query = query.Where("base_price >= ?", filter.MinPrice)
+	}
+	if filter.MaxPrice > 0 {
+		query = query.Where("base_price <= ?", filter.MaxPrice)
+	}
 
-	// Pagination
+	if filter.CreatedAfter != nil {
+		query = query.Where("created_at >= ?", filter.CreatedAfter)
+	}
+
+	if filter.CreatedBefore != nil {
+		query = query.Where("created_at <= ?", filter.CreatedBefore)
+	}
+
+	if filter.IsActive != nil {
+		query = query.Where("is_active = ?", *filter.IsActive)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	page := filter.Page
+	if page <= 0 {
+		page = 1
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+
 	offset := (page - 1) * limit
+
 	err := query.Offset(offset).Limit(limit).Find(&products).Error
 
 	return products, total, err
@@ -62,15 +91,14 @@ func (r *productRepository) SoftDelete(ctx context.Context, id int) error {
 
 func (r *productRepository) Restore(ctx context.Context, id int) error {
 	var product domain.Product
-	// Find the record (including soft deleted)
+
 	if err := r.DB.WithContext(ctx).Unscoped().First(&product, id).Error; err != nil {
 		return err
 	}
-	// Update DeletedAt to nil
+
 	return r.DB.WithContext(ctx).Unscoped().Model(&product).Update("DeletedAt", nil).Error
 }
 
-// ForceDelete permanently deletes a product if only it has no sales records
 func (r *productRepository) ForceDelete(ctx context.Context, id int) error {
 	var product domain.Product
 

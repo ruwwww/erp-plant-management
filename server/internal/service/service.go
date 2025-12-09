@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"server/internal/core/domain"
+	"server/internal/dto"
 	"time"
 )
 
@@ -62,26 +63,16 @@ type UserFilterParams struct {
 // 2. STORE & CATALOG
 // ==========================================
 
-type ProductFilterParams struct {
-	Search       string
-	CategorySlug string
-	MinPrice     float64
-	MaxPrice     float64
-	IsActive     *bool // nil = all (admin), true = active only (customer)
-	Page         int
-	Limit        int
-}
-
 type CatalogService interface {
 	// Browsing
-	GetProducts(ctx context.Context, filter ProductFilterParams) ([]domain.Product, int64, error)
+	GetProducts(ctx context.Context, filter dto.ProductFilterParams) ([]domain.Product, int64, error)
 	GetProductDetail(ctx context.Context, slug string) (*domain.Product, error)
 	GetCategories(ctx context.Context) ([]domain.Category, error)
 	GetVariants(ctx context.Context, productID int) ([]domain.ProductVariant, error)
 
 	// Admin Management
 	CreateProduct(ctx context.Context, product *domain.Product) error
-	UpdateProduct(ctx context.Context, product *domain.Product) error
+	UpdateProduct(ctx context.Context, id int, req dto.UpdateProductRequest) error
 	UpdateVariants(ctx context.Context, productID int, variants []domain.ProductVariant) error
 	SoftDeleteProduct(ctx context.Context, id int) error
 	RestoreProduct(ctx context.Context, id int) error
@@ -136,6 +127,8 @@ type OrderService interface {
 	SoftDeleteOrder(ctx context.Context, orderID int) error
 	RestoreOrder(ctx context.Context, orderID int) error
 	ForceDeleteOrder(ctx context.Context, orderID int) error
+
+	GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error)
 }
 
 type OrderFilterParams struct {

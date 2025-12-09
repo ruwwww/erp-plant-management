@@ -37,6 +37,7 @@ type CheckoutPlaceRequest struct {
 	ShippingAddressID int               `json:"shipping_address_id" validate:"required"`
 	BillingAddressID  int               `json:"billing_address_id"` // Optional, defaults to shipping
 	PaymentMethod     string            `json:"payment_method" validate:"required,oneof=STRIPE MIDTRANS"`
+	GuestEmail        string            `json:"guest_email" validate:"omitempty,email"`
 }
 
 // Response

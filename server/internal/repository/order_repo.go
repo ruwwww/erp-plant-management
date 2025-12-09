@@ -26,6 +26,16 @@ func (r *orderRepository) GetFullOrder(ctx context.Context, orderNumber string) 
 	return &order, err
 }
 
+func (r *orderRepository) GetFullOrderByID(ctx context.Context, id int) (*domain.SalesOrder, error) {
+	var order domain.SalesOrder
+	err := r.DB.WithContext(ctx).
+		Preload("Items").
+		Preload("Customer").
+		Preload("Customer.User").
+		First(&order, id).Error
+	return &order, err
+}
+
 func (r *orderRepository) GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error) {
 	var orders []domain.SalesOrder
 	err := r.DB.WithContext(ctx).

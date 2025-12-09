@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"server/internal/core/domain"
+	"server/internal/dto"
 	"server/internal/repository"
 
 	"gorm.io/gorm"
@@ -13,8 +15,7 @@ type CatalogServiceImpl struct {
 	productRepo  repository.ProductRepository
 	categoryRepo repository.CategoryRepository
 	variantRepo  repository.VariantRepository
-	db           *gorm.DB // Needed for transaction
-
+	db           *gorm.DB
 }
 
 func NewCatalogService(
@@ -32,13 +33,8 @@ func NewCatalogService(
 	}
 }
 
-func (s *CatalogServiceImpl) GetProducts(ctx context.Context, filter ProductFilterParams) ([]domain.Product, int64, error) {
-	// TODO: Implement proper filtering
-	products, err := s.productRepo.FindAll(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	return products, int64(len(products)), nil
+func (s *CatalogServiceImpl) GetProducts(ctx context.Context, filter dto.ProductFilterParams) ([]domain.Product, int64, error) {
+	return s.productRepo.Search(ctx, filter)
 }
 
 func (s *CatalogServiceImpl) GetProductDetail(ctx context.Context, slug string) (*domain.Product, error) {
@@ -57,7 +53,40 @@ func (s *CatalogServiceImpl) CreateProduct(ctx context.Context, product *domain.
 	return s.productRepo.Create(ctx, product)
 }
 
-func (s *CatalogServiceImpl) UpdateProduct(ctx context.Context, product *domain.Product) error {
+func (s *CatalogServiceImpl) UpdateProduct(ctx context.Context, id int, req dto.UpdateProductRequest) error {
+
+	product, err := s.productRepo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if req.Name != nil {
+		product.Name = *req.Name
+	}
+
+	if req.Description != nil {
+		product.Description = req.Description
+	}
+
+	if req.BasePrice != nil {
+		if *req.BasePrice < 0 {
+			return errors.New("price cannot be negative")
+		}
+		product.BasePrice = *req.BasePrice
+	}
+
+	if req.WeightKG != nil {
+		product.WeightKG = req.WeightKG
+	}
+
+	if req.CategoryID != nil {
+		product.CategoryID = req.CategoryID
+	}
+
+	if req.IsActive != nil {
+		product.IsActive = *req.IsActive
+	}
+
 	return s.productRepo.Update(ctx, product)
 }
 
@@ -107,7 +136,6 @@ func (s *CatalogServiceImpl) UpdateVariants(ctx context.Context, productID int, 
 }
 
 func (s *CatalogServiceImpl) SoftDeleteProduct(ctx context.Context, id int) error {
-	// TODO: Implement soft delete logic (set DeletedAt)
 	return s.productRepo.SoftDelete(ctx, id)
 }
 
@@ -136,12 +164,13 @@ func (s *CatalogServiceImpl) ImportProducts(ctx context.Context, data []byte) er
 	if err := json.Unmarshal(data, &products); err != nil {
 		return err
 	}
-	for _, p := range products {
-		if err := s.productRepo.Create(ctx, &p); err != nil {
+
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&products).Error; err != nil {
 			return err
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (s *CatalogServiceImpl) ExportProducts(ctx context.Context) ([]byte, error) {

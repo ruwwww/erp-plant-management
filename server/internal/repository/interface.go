@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"server/internal/core/domain"
+	"server/internal/dto"
 )
 
 // 1. Base Generic Interface
@@ -31,7 +32,7 @@ type ProductRepository interface {
 	// GetFullProduct loads Variants, Category, and Supplier
 	GetFullProduct(ctx context.Context, slug string) (*domain.Product, error)
 	// Search supports complex filtering
-	Search(ctx context.Context, filter map[string]interface{}, page, limit int) ([]domain.Product, int64, error)
+	Search(ctx context.Context, filter dto.ProductFilterParams) ([]domain.Product, int64, error)
 	// SoftDelete soft deletes a product
 	SoftDelete(ctx context.Context, id int) error
 	// Restore restores a soft-deleted product
@@ -60,6 +61,8 @@ type OrderRepository interface {
 	Repository[domain.SalesOrder]
 	// GetFullOrder loads Items, Customer, and Payment info
 	GetFullOrder(ctx context.Context, orderNumber string) (*domain.SalesOrder, error)
+	GetFullOrderByID(ctx context.Context, id int) (*domain.SalesOrder, error)
+
 	GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error)
 	SoftDelete(ctx context.Context, id int) error
 	Restore(ctx context.Context, id int) error

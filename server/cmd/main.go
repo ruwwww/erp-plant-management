@@ -41,8 +41,8 @@ func main() {
 	userService := service.NewUserService(userRepo, addrRepo)
 	catalogService := service.NewCatalogService(productRepo, categoryRepo, variantRepo, database.DB)
 	cartService := service.NewCartService()
-	orderService := service.NewOrderService(orderRepo)
 	inventoryService := service.NewInventoryService(stockRepo, movementRepo, database.DB)
+	orderService := service.NewOrderService(orderRepo, inventoryService, database.DB)
 	posService := service.NewPOSService(sessionRepo, cashMoveRepo)
 	assemblyService := service.NewAssemblyService()
 	procurementService := service.NewProcurementService(poRepo, supplierRepo)
@@ -52,7 +52,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService)
 	storeHandler := handlers.NewStoreHandler(catalogService, cartService, orderService)
 	userHandler := handlers.NewUserHandler(userService, orderService, financeService)
-	posHandler := handlers.NewPOSHandler(posService)
+	posHandler := handlers.NewPOSHandler(posService, orderService)
 	opsHandler := handlers.NewOpsHandler(inventoryService, assemblyService, procurementService)
 	adminHandler := handlers.NewAdminHandler(catalogService, authService, userService)
 

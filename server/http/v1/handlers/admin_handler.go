@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"math"
 	"server/internal/core/domain"
 	"server/internal/dto"
 	"server/internal/service"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -25,50 +27,98 @@ func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService,
 
 // Products
 func (h *AdminHandler) GetProducts(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "10"))
+
+	filter := dto.ProductFilterParams{
+		Search:       c.Query("q"),
+		CategorySlug: c.Query("category"),
+		Page:         page,
+		Limit:        limit,
+	}
+
+	if minPrice := c.Query("min_price"); minPrice != "" {
+		filter.MinPrice, _ = strconv.ParseFloat(minPrice, 64)
+	}
+	if maxPrice := c.Query("max_price"); maxPrice != "" {
+		filter.MaxPrice, _ = strconv.ParseFloat(maxPrice, 64)
+	}
+
+	if dateStr := c.Query("created_after"); dateStr != "" {
+		// Parse ISO8601 / RFC3339 format
+		if t, err := time.Parse("2006-01-02", dateStr); err == nil {
+			filter.CreatedAfter = &t
+		}
+	}
+
+	// Parse 'created_before'
+	if dateStr := c.Query("created_before"); dateStr != "" {
+		if t, err := time.Parse("2006-01-02", dateStr); err == nil {
+			// Adjust to End of Day (23:59:59) if needed, or strict comparison
+			filter.CreatedBefore = &t
+		}
+	}
+
+	statusParam := c.Query("status")
+	if statusParam == "active" {
+		active := true
+		filter.IsActive = &active
+	} else if statusParam == "archived" {
+		active := false
+		filter.IsActive = &active
+	}
+
+	products, total, err := h.catalogService.GetProducts(c.Context(), filter)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": products,
+		"meta": fiber.Map{
+			"page":        page,
+			"limit":       limit,
+			"total_rows":  total,
+			"total_pages": int(math.Ceil(float64(total) / float64(limit))),
+		},
+	})
 }
 
 func (h *AdminHandler) CreateProduct(c *fiber.Ctx) error {
 	var req dto.CreateProductRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
-	}
 
-	product := &domain.Product{
-		Name: req.Name,
-		SKU:  req.SKU,
-		Slug: req.Slug,
-		// Description: &req.Description,
-		// CategoryID:  &req.CategoryID,
-		BasePrice: req.BasePrice,
-		// ...
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
 	}
+	// TODO: Add h.Validator.Struct(&req) here!
+
+	product := req.ToDomain()
 
 	if err := h.catalogService.CreateProduct(c.Context(), product); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Product created", "id": product.ID})
+	return c.Status(201).JSON(fiber.Map{"id": product.ID})
 }
 
 func (h *AdminHandler) UpdateProduct(c *fiber.Ctx) error {
-	id, _ := strconv.Atoi(c.Params("id"))
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
 	var req dto.UpdateProductRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	product := &domain.Product{
-		ID:   id,
-		Name: req.Name,
-		// ...
-	}
-
-	if err := h.catalogService.UpdateProduct(c.Context(), product); err != nil {
+	if err := h.catalogService.UpdateProduct(c.Context(), id, req); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.JSON(fiber.Map{"message": "Product updated"})
+	return c.JSON(fiber.Map{"message": "Product updated successfully"})
 }
 
 func (h *AdminHandler) SoftDeleteProduct(c *fiber.Ctx) error {

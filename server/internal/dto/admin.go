@@ -1,5 +1,9 @@
 package dto
 
+import (
+	"server/internal/core/domain"
+)
+
 // --- Products ---
 type CreateProductRequest struct {
 	Name        string  `json:"name" validate:"required,min=3"`
@@ -14,11 +18,44 @@ type CreateProductRequest struct {
 	StockControl bool `json:"stock_control"`
 }
 
+func (r *CreateProductRequest) ToDomain() *domain.Product {
+	p := &domain.Product{
+		Name:      r.Name,
+		SKU:       r.SKU,
+		Slug:      r.Slug,
+		BasePrice: r.BasePrice,
+		IsActive:  true,
+	}
+
+	if r.Description != "" {
+		desc := r.Description
+		p.Description = &desc
+	}
+
+	if r.WeightKG > 0 {
+		val := r.WeightKG
+		p.WeightKG = &val
+	}
+
+	if r.CategoryID != 0 {
+		id := r.CategoryID
+		p.CategoryID = &id
+	}
+	if r.SupplierID != 0 {
+		id := r.SupplierID
+		p.SupplierID = &id
+	}
+
+	return p
+}
+
 type UpdateProductRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CategoryID  int    `json:"category_id"`
-	IsActive    *bool  `json:"is_active"`
+	Name        *string  `json:"name"`
+	Description *string  `json:"description"`
+	BasePrice   *float64 `json:"base_price"`
+	CategoryID  *int     `json:"category_id"`
+	IsActive    *bool    `json:"is_active"`
+	WeightKG    *float64 `json:"weight_kg"`
 }
 
 type ProductVariantRequest struct {

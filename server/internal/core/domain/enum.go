@@ -60,6 +60,8 @@ const (
 	OrderConfirmed OrderStatus = "CONFIRMED"
 	OrderCompleted OrderStatus = "COMPLETED"
 	OrderCancelled OrderStatus = "CANCELLED"
+	OrderShipped   OrderStatus = "SHIPPED"
+	OrderReturned  OrderStatus = "RETURNED"
 )
 
 type ShipmentStatus string

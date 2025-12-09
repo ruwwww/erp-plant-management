@@ -11,9 +11,10 @@ type CloseSessionRequest struct {
 }
 
 type CashMoveRequest struct {
-	Amount float64 `json:"amount" validate:"required,gt=0"`
-	Type   string  `json:"type" validate:"required,oneof=ADD DROP"`
-	Reason string  `json:"reason" validate:"required"`
+	Amount       float64 `json:"amount" validate:"required,gt=0"`
+	Type         string  `json:"type" validate:"required,oneof=ADD DROP"`
+	Reason       string  `json:"reason" validate:"required"`
+	POSSessionID int     `json:"pos_session_id" validate:"required"`
 }
 
 // Orders
