@@ -40,6 +40,14 @@ func (s *ProcurementServiceImpl) ReceivePO(ctx context.Context, poID int, receiv
 	return s.poRepo.Update(ctx, po)
 }
 
+func (s *ProcurementServiceImpl) GetSuppliers(ctx context.Context) ([]domain.Supplier, error) {
+	return s.supplierRepo.FindAll(ctx)
+}
+
+func (s *ProcurementServiceImpl) GetSupplier(ctx context.Context, id int) (*domain.Supplier, error) {
+	return s.supplierRepo.FindByID(ctx, id)
+}
+
 func (s *ProcurementServiceImpl) CreateSupplier(ctx context.Context, supplier *domain.Supplier) error {
 	return s.supplierRepo.Create(ctx, supplier)
 }

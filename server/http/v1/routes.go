@@ -186,6 +186,14 @@ func SetupRoutes(
 		admin.Post("/users/:id/reset-password", adminH.AdminResetPassword)
 		admin.Post("/users/:id/roles", adminH.AssignRoles)
 
+		// Supliers
+		admin.Get("/suppliers", adminH.GetSuppliers)
+		admin.Post("/suppliers", adminH.CreateSupplier)
+		admin.Put("/suppliers/:id", adminH.UpdateSupplier)
+		admin.Delete("/suppliers/:id", adminH.SoftDeleteSupplier)        // Soft Delete
+		admin.Post("/suppliers/:id/restore", adminH.RestoreSupplier)     // Restore
+		admin.Delete("/suppliers/:id/force", adminH.ForceDeleteSupplier) // Hard Delete
+
 		// CRM
 		admin.Get("/customers/segments", adminH.GetSegments)
 		admin.Post("/customers/email", adminH.TriggerEmailCampaign)

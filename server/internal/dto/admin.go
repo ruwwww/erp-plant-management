@@ -128,3 +128,19 @@ type EditMediaRequest struct {
 type BulkImportProductsRequest struct {
 	Items []CreateProductRequest `json:"items" validate:"dive"`
 }
+
+// --- Suppliers ---
+type CreateSupplierRequest struct {
+	Name        string `json:"name" validate:"required"`
+	ContactName string `json:"contact_name"`
+	Email       string `json:"email" validate:"omitempty,email"`
+	Phone       string `json:"phone"`
+	// Address fields could be nested or separate
+}
+
+type UpdateSupplierRequest struct {
+	Name        string `json:"name"`
+	ContactName string `json:"contact_name"`
+	Email       string `json:"email" validate:"omitempty,email"`
+	Phone       string `json:"phone"`
+}

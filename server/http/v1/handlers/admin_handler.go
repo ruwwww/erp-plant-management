@@ -12,16 +12,18 @@ import (
 )
 
 type AdminHandler struct {
-	catalogService service.CatalogService
-	authService    service.AuthService
-	userService    service.UserService
+	catalogService     service.CatalogService
+	authService        service.AuthService
+	userService        service.UserService
+	procurementService service.ProcurementService
 }
 
-func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService, userS service.UserService) *AdminHandler {
+func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService, userS service.UserService, procurementS service.ProcurementService) *AdminHandler {
 	return &AdminHandler{
-		catalogService: catalogS,
-		authService:    authS,
-		userService:    userS,
+		catalogService:     catalogS,
+		authService:        authS,
+		userService:        userS,
+		procurementService: procurementS,
 	}
 }
 
@@ -266,6 +268,96 @@ func (h *AdminHandler) GetSegments(c *fiber.Ctx) error {
 
 func (h *AdminHandler) TriggerEmailCampaign(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) CreateSupplier(c *fiber.Ctx) error {
+	var req dto.CreateSupplierRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	supplier := &domain.Supplier{
+		Name: req.Name,
+	}
+	if req.ContactName != "" {
+		supplier.ContactName = &req.ContactName
+	}
+	if req.Email != "" {
+		supplier.Email = &req.Email
+	}
+	if req.Phone != "" {
+		supplier.Phone = &req.Phone
+	}
+
+	if err := h.procurementService.CreateSupplier(c.Context(), supplier); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Supplier created", "id": supplier.ID})
+}
+
+func (h *AdminHandler) GetSuppliers(c *fiber.Ctx) error {
+	suppliers, err := h.procurementService.GetSuppliers(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(suppliers)
+}
+
+func (h *AdminHandler) UpdateSupplier(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var req dto.UpdateSupplierRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	supplier, err := h.procurementService.GetSupplier(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Supplier not found"})
+	}
+
+	if req.Name != "" {
+		supplier.Name = req.Name
+	}
+	if req.ContactName != "" {
+		supplier.ContactName = &req.ContactName
+	}
+	if req.Email != "" {
+		supplier.Email = &req.Email
+	}
+	if req.Phone != "" {
+		supplier.Phone = &req.Phone
+	}
+
+	if err := h.procurementService.UpdateSupplier(c.Context(), supplier); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Supplier updated"})
+}
+
+func (h *AdminHandler) SoftDeleteSupplier(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.procurementService.SoftDeleteSupplier(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Supplier deleted"})
+}
+
+func (h *AdminHandler) RestoreSupplier(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.procurementService.RestoreSupplier(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Supplier restored"})
+}
+
+func (h *AdminHandler) ForceDeleteSupplier(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.procurementService.ForceDeleteSupplier(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Supplier permanently deleted"})
 }
 
 // Promotions

@@ -54,7 +54,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(userService, orderService, financeService)
 	posHandler := handlers.NewPOSHandler(posService, orderService)
 	opsHandler := handlers.NewOpsHandler(inventoryService, assemblyService, procurementService)
-	adminHandler := handlers.NewAdminHandler(catalogService, authService, userService)
+	adminHandler := handlers.NewAdminHandler(catalogService, authService, userService, procurementService)
 
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{

@@ -201,6 +201,8 @@ type ProcurementService interface {
 	ReceivePO(ctx context.Context, poID int, receivedItems map[int]int) error
 
 	// Supplier Management
+	GetSuppliers(ctx context.Context) ([]domain.Supplier, error)
+	GetSupplier(ctx context.Context, id int) (*domain.Supplier, error)
 	CreateSupplier(ctx context.Context, supplier *domain.Supplier) error
 	UpdateSupplier(ctx context.Context, supplier *domain.Supplier) error
 	SoftDeleteSupplier(ctx context.Context, id int) error
