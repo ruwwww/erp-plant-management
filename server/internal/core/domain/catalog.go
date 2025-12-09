@@ -51,6 +51,7 @@ type ProductVariant struct {
 	CompareAtPrice *float64               `gorm:"type:decimal(12,2)" json:"compare_at_price"`
 	Barcode        *string                `gorm:"size:64" json:"barcode"`
 	StockControl   bool                   `gorm:"not null;default:true" json:"stock_control"`
+	UsedInRecipes  []ProductRecipe        `gorm:"foreignKey:ChildVariantID" json:"used_in_recipes,omitempty"`
 	CreatedAt      time.Time              `json:"created_at"`
 	UpdatedAt      time.Time              `json:"updated_at"`
 	DeletedAt      *time.Time             `json:"deleted_at"`

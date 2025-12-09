@@ -7,11 +7,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewAssemblyRepository(db *gorm.DB) ports.AssemblyRepository {
-	return &AssemblyRepository{NewGormRepository[domain.StockAssembly](db)}
+type assemblyRepository struct {
+	*GormRepository[domain.StockAssembly]
 }
 
-func (r *AssemblyRepository) GetRecipe(ctx context.Context, variantID int) ([]domain.ProductRecipe, error) {
+func NewAssemblyRepository(db *gorm.DB) AssemblyRepository {
+	return &assemblyRepository{NewGormRepository[domain.StockAssembly](db)}
+}
+
+func (r *assemblyRepository) GetRecipe(ctx context.Context, variantID int) ([]domain.ProductRecipe, error) {
 	var recipes []domain.ProductRecipe
 	err := r.DB.WithContext(ctx).
 		Where("parent_variant_id = ?", variantID).

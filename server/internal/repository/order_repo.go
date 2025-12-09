@@ -7,15 +7,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrderRepository struct {
+type orderRepository struct {
 	*GormRepository[domain.SalesOrder]
 }
 
-func NewOrderRepository(db *gorm.DB) ports.OrderRepository {
-	return &OrderRepository{NewGormRepository[domain.SalesOrder](db)}
+func NewOrderRepository(db *gorm.DB) OrderRepository {
+	return &orderRepository{NewGormRepository[domain.SalesOrder](db)}
 }
 
-func (r *OrderRepository) GetFullOrder(ctx context.Context, orderNumber string) (*domain.SalesOrder, error) {
+func (r *orderRepository) GetFullOrder(ctx context.Context, orderNumber string) (*domain.SalesOrder, error) {
 	var order domain.SalesOrder
 	err := r.DB.WithContext(ctx).
 		Preload("Items").
@@ -26,7 +26,7 @@ func (r *OrderRepository) GetFullOrder(ctx context.Context, orderNumber string) 
 	return &order, err
 }
 
-func (r *OrderRepository) GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error) {
+func (r *orderRepository) GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error) {
 	var orders []domain.SalesOrder
 	err := r.DB.WithContext(ctx).
 		Preload("Items").

@@ -7,15 +7,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type PurchaseOrderRepository struct {
+type purchaseOrderRepository struct {
 	*GormRepository[domain.PurchaseOrder]
 }
 
-func NewPurchaseOrderRepository(db *gorm.DB) ports.PurchaseOrderRepository {
-	return &PurchaseOrderRepository{NewGormRepository[domain.PurchaseOrder](db)}
+func NewPurchaseOrderRepository(db *gorm.DB) PurchaseOrderRepository {
+	return &purchaseOrderRepository{NewGormRepository[domain.PurchaseOrder](db)}
 }
 
-func (r *PurchaseOrderRepository) GetFullPO(ctx context.Context, id int) (*domain.PurchaseOrder, error) {
+func (r *purchaseOrderRepository) GetFullPO(ctx context.Context, id int) (*domain.PurchaseOrder, error) {
 	var po domain.PurchaseOrder
 	err := r.DB.WithContext(ctx).
 		Preload("Items").

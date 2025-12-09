@@ -3,20 +3,19 @@ package repository
 import (
 	"context"
 	"server/internal/core/domain"
-	"server/internal/core/ports"
 
 	"gorm.io/gorm"
 )
 
-type ProductRepository struct {
+type productRepository struct {
 	*GormRepository[domain.Product]
 }
 
-func NewProductRepository(db *gorm.DB) ports.ProductRepository {
-	return &ProductRepository{NewGormRepository[domain.Product](db)}
+func NewProductRepository(db *gorm.DB) ProductRepository {
+	return &productRepository{NewGormRepository[domain.Product](db)}
 }
 
-func (r *ProductRepository) GetFullProduct(ctx context.Context, slug string) (*domain.Product, error) {
+func (r *productRepository) GetFullProduct(ctx context.Context, slug string) (*domain.Product, error) {
 	var product domain.Product
 	// Preload necessary relations
 	err := r.DB.WithContext(ctx).
@@ -27,18 +26,16 @@ func (r *ProductRepository) GetFullProduct(ctx context.Context, slug string) (*d
 	return &product, err
 }
 
-func (r *ProductRepository) Search(ctx context.Context, filter map[string]interface{}, page, limit int) ([]domain.Product, int64, error) {
+func (r *productRepository) Search(ctx context.Context, filter map[string]interface{}, page, limit int) ([]domain.Product, int64, error) {
 	var products []domain.Product
 	var total int64
 
-	query := r.DB.WithContext(ctx).Model(&domain.Product{})
+	query := r.DB.WithContext(ctx).Model(&domain.Product{}).Preload("Category").Preload("Supplier")
 
-	// Dynamic Filtering
 	if search, ok := filter["search"].(string); ok && search != "" {
 		query = query.Where("name ILIKE ? OR sku ILIKE ?", "%"+search+"%", "%"+search+"%")
 	}
 	if catSlug, ok := filter["category_slug"].(string); ok && catSlug != "" {
-		// Sub-query logic or simple join could go here
 		query = query.Joins("JOIN categories ON categories.id = products.category_id").
 			Where("categories.slug = ?", catSlug)
 	}
