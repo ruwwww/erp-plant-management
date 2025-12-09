@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # PRODUCTION SCALING
+  # ==========================================
+  
+  gateway:
+    restart: always
+    ports:
+      - "443:443" # Enable HTTPS in prod
+      - "80:80"
+
+  api_store:
+    restart: always
+    deploy:
+      replicas: 3 # Prod: 3 instances (Handling public traffic)
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+
+  api_pos:
+    restart: always
+    deploy:
+      replicas: 1 # POS is internal, usually stable
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+
+  api_internal:
+    restart: always
+    deploy:
+      replicas: 2 # Redundancy for Admin
+      resources:
+        limits:
+          cpus: "1.0" # More power for heavy reports
+          memory: 1G
+
+  # ==========================================
+  # PRODUCTION DATA SAFETY
+  # ==========================================
+  db_primary:
+    restart: always
+    environment:
+      # In prod, usually use a managed RDS/Cloud SQL, 
+      # but if using Docker, ensure strong passwords.
+      POSTGRES_PASSWORD: ${DB_PASSWORD_SECURE}
+    volumes:
+      # Map to a physical disk on the server
+      - /mnt/volume_sfo3_01/postgres_primary:/var/lib/postgresql/data
+
+  minio:
+    volumes:
+      - /mnt/volume_sfo3_01/minio_data:/data
