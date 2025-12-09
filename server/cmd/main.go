@@ -28,6 +28,7 @@ func main() {
 	productRepo := repository.NewProductRepository(database.DB)
 	categoryRepo := repository.NewCategoryRepository(database.DB)
 	variantRepo := repository.NewVariantRepository(database.DB)
+	tagRepo := repository.NewTagRepository(database.DB)
 	stockRepo := repository.NewGormRepository[domain.Stock](database.DB)
 	movementRepo := repository.NewGormRepository[domain.StockMovement](database.DB)
 	orderRepo := repository.NewOrderRepository(database.DB)
@@ -39,7 +40,7 @@ func main() {
 	// Services
 	authService := service.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 	userService := service.NewUserService(userRepo, addrRepo)
-	catalogService := service.NewCatalogService(productRepo, categoryRepo, variantRepo, database.DB)
+	catalogService := service.NewCatalogService(productRepo, categoryRepo, variantRepo, tagRepo, database.DB)
 	marketingService := service.NewMarketingService(database.DB)
 	cartService := service.NewCartService(marketingService)
 	inventoryService := service.NewInventoryService(stockRepo, movementRepo, database.DB)

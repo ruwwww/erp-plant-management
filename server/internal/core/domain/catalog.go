@@ -38,6 +38,7 @@ type Product struct {
 	CreatedAt   time.Time        `json:"created_at"`
 	UpdatedAt   time.Time        `json:"updated_at"`
 	DeletedAt   *time.Time       `json:"deleted_at"`
+	Tags        []Tag            `gorm:"many2many:product_tags;" json:"tags"`
 }
 
 type ProductVariant struct {

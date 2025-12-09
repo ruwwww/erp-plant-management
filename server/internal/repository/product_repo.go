@@ -22,6 +22,7 @@ func (r *productRepository) GetFullProduct(ctx context.Context, slug string) (*d
 	err := r.DB.WithContext(ctx).
 		Preload("Category").
 		Preload("Supplier").
+		Preload("Tags").
 		Where("slug = ?", slug).
 		First(&product).Error
 	return &product, err
@@ -33,7 +34,8 @@ func (r *productRepository) Search(ctx context.Context, filter dto.ProductFilter
 
 	query := r.DB.WithContext(ctx).Model(&domain.Product{}).
 		Preload("Category").
-		Preload("Supplier")
+		Preload("Supplier").
+		Preload("Tags")
 
 	if filter.Search != "" {
 		query = query.Where("name ILIKE ? OR sku ILIKE ?", "%"+filter.Search+"%", "%"+filter.Search+"%")
@@ -42,6 +44,13 @@ func (r *productRepository) Search(ctx context.Context, filter dto.ProductFilter
 	if filter.CategorySlug != "" {
 		query = query.Joins("JOIN categories ON categories.id = products.category_id").
 			Where("categories.slug = ?", filter.CategorySlug)
+	}
+
+	if len(filter.Tags) > 0 {
+		query = query.Joins("JOIN product_tags ON product_tags.product_id = products.id").
+			Joins("JOIN tags ON tags.id = product_tags.tag_id").
+			Where("tags.slug IN ?", filter.Tags).
+			Group("products.id")
 	}
 
 	if filter.MinPrice > 0 {

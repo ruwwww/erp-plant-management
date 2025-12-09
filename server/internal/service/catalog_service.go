@@ -15,6 +15,7 @@ type CatalogServiceImpl struct {
 	productRepo  repository.ProductRepository
 	categoryRepo repository.CategoryRepository
 	variantRepo  repository.VariantRepository
+	tagRepo      repository.TagRepository
 	db           *gorm.DB
 }
 
@@ -22,6 +23,7 @@ func NewCatalogService(
 	productRepo repository.ProductRepository,
 	categoryRepo repository.CategoryRepository,
 	variantRepo repository.VariantRepository,
+	tagRepo repository.TagRepository,
 	db *gorm.DB,
 
 ) CatalogService {
@@ -29,6 +31,7 @@ func NewCatalogService(
 		productRepo:  productRepo,
 		categoryRepo: categoryRepo,
 		variantRepo:  variantRepo,
+		tagRepo:      tagRepo,
 		db:           db,
 	}
 }
@@ -179,4 +182,40 @@ func (s *CatalogServiceImpl) ExportProducts(ctx context.Context) ([]byte, error)
 		return nil, err
 	}
 	return json.Marshal(products)
+}
+
+// Tags
+func (s *CatalogServiceImpl) GetTags(ctx context.Context) ([]domain.Tag, error) {
+	return s.tagRepo.FindAll(ctx)
+}
+
+func (s *CatalogServiceImpl) CreateTag(ctx context.Context, tag *domain.Tag) error {
+	// Basic validation
+	if tag.Name == "" {
+		return errors.New("tag name is required")
+	}
+	if tag.Slug == "" {
+		return errors.New("tag slug is required")
+	}
+	return s.tagRepo.Create(ctx, tag)
+}
+
+func (s *CatalogServiceImpl) GetTagBySlug(ctx context.Context, slug string) (*domain.Tag, error) {
+	return s.tagRepo.FindBySlug(ctx, slug)
+}
+
+func (s *CatalogServiceImpl) UpdateProductTags(ctx context.Context, productID int, tagIDs []int) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		// Clear existing tags
+		if err := tx.Where("product_id = ?", productID).Delete(&domain.ProductTag{}).Error; err != nil {
+			return err
+		}
+		// Add new tags
+		for _, tagID := range tagIDs {
+			if err := tx.Create(&domain.ProductTag{ProductID: productID, TagID: tagID}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

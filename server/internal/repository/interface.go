@@ -48,6 +48,11 @@ type VariantRepository interface {
 	ForceDelete(ctx context.Context, id int) error
 }
 
+type TagRepository interface {
+	Repository[domain.Tag]
+	FindBySlug(ctx context.Context, slug string) (*domain.Tag, error)
+}
+
 type CategoryRepository interface {
 	Repository[domain.Category]
 	GetTree(ctx context.Context) ([]domain.Category, error)

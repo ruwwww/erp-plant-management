@@ -194,6 +194,11 @@ func SetupRoutes(
 		admin.Post("/suppliers/:id/restore", adminH.RestoreSupplier)     // Restore
 		admin.Delete("/suppliers/:id/force", adminH.ForceDeleteSupplier) // Hard Delete
 
+		// Tags
+		admin.Get("/tags", adminH.GetTags)
+		admin.Post("/tags", adminH.CreateTag)
+		admin.Put("/products/:id/tags", adminH.UpdateProductTags)
+
 		// CRM
 		admin.Get("/customers/segments", adminH.GetSegments)
 		admin.Post("/customers/email", adminH.TriggerEmailCampaign)

@@ -6,6 +6,7 @@ import (
 	"server/internal/dto"
 	"server/internal/service"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -39,6 +40,10 @@ func (h *AdminHandler) GetProducts(c *fiber.Ctx) error {
 		CategorySlug: c.Query("category"),
 		Page:         page,
 		Limit:        limit,
+	}
+
+	if tags := c.Query("tags"); tags != "" {
+		filter.Tags = strings.Split(tags, ",")
 	}
 
 	if minPrice := c.Query("min_price"); minPrice != "" {
@@ -360,6 +365,54 @@ func (h *AdminHandler) ForceDeleteSupplier(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"message": "Supplier permanently deleted"})
+}
+
+// Tags
+func (h *AdminHandler) GetTags(c *fiber.Ctx) error {
+	tags, err := h.catalogService.GetTags(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(tags)
+}
+
+func (h *AdminHandler) CreateTag(c *fiber.Ctx) error {
+	var req dto.CreateTagRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	tag := &domain.Tag{
+		Name:        req.Name,
+		Slug:        req.Slug,
+		DisplayName: req.DisplayName,
+	}
+
+	err := h.catalogService.CreateTag(c.Context(), tag)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(tag)
+}
+
+func (h *AdminHandler) UpdateProductTags(c *fiber.Ctx) error {
+	productID, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid product ID"})
+	}
+
+	var req dto.UpdateProductTagsRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	err = h.catalogService.UpdateProductTags(c.Context(), productID, req.TagIDs)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Product tags updated successfully"})
 }
 
 // Promotions

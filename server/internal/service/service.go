@@ -84,6 +84,12 @@ type CatalogService interface {
 	// Data Operations
 	ImportProducts(ctx context.Context, data []byte) error // Process CSV/JSON
 	ExportProducts(ctx context.Context) ([]byte, error)    // Return CSV/Excel bytes
+
+	// Tags
+	GetTags(ctx context.Context) ([]domain.Tag, error)
+	CreateTag(ctx context.Context, tag *domain.Tag) error
+	GetTagBySlug(ctx context.Context, slug string) (*domain.Tag, error)
+	UpdateProductTags(ctx context.Context, productID int, tagIDs []int) error
 }
 
 type MediaService interface {
