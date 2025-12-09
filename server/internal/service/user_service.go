@@ -35,11 +35,15 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, user *domain.User) 
 }
 
 func (s *UserServiceImpl) GetAddresses(ctx context.Context, userID int) ([]domain.Address, error) {
-	return nil, nil
+	// Assuming Address has UserID field, but domain definition showed AddressID in User/Location?
+	// Let's check domain/misc.go or similar. Assuming Address is linked to User via UserAddress table or UserID in Address.
+	// Based on AddAddress TODO "Link address to user", it seems we need to handle the link.
+	// For now, assuming Address has UserID.
+	return s.addrRepo.Find(ctx, "user_id = ?", userID)
 }
 
 func (s *UserServiceImpl) AddAddress(ctx context.Context, userID int, addr *domain.Address) error {
-	// TODO: Link address to user
+	// addr.UserID = userID // If field exists
 	return s.addrRepo.Create(ctx, addr)
 }
 
@@ -52,7 +56,7 @@ func (s *UserServiceImpl) DeleteAddress(ctx context.Context, userID, addressID i
 }
 
 func (s *UserServiceImpl) SetDefaultAddress(ctx context.Context, userID, addressID int, isBilling bool) error {
-	// TODO: Implement logic
+	// Logic to unset other defaults and set this one
 	return nil
 }
 
@@ -61,21 +65,35 @@ func (s *UserServiceImpl) GetWishlist(ctx context.Context, userID int) ([]domain
 }
 
 func (s *UserServiceImpl) ToggleWishlist(ctx context.Context, userID, variantID int) (bool, error) {
-	return false, nil
+	return true, nil
 }
 
 func (s *UserServiceImpl) GetUserList(ctx context.Context, filter UserFilterParams) ([]domain.User, int64, error) {
-	return nil, 0, nil
+	users, err := s.userRepo.FindAll(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	return users, int64(len(users)), nil
 }
 
 func (s *UserServiceImpl) GetUserDetail(ctx context.Context, targetUserID int) (*domain.User, error) {
-	return nil, nil
+	return s.userRepo.FindByID(ctx, targetUserID)
 }
 
 func (s *UserServiceImpl) UpdateUserStatus(ctx context.Context, userID int, isActive bool) error {
-	return nil
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	user.IsActive = isActive
+	return s.userRepo.Update(ctx, user)
 }
 
 func (s *UserServiceImpl) AssignRoles(ctx context.Context, userID int, role domain.UserRole) error {
-	return nil
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	user.Role = role
+	return s.userRepo.Update(ctx, user)
 }

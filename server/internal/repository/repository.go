@@ -30,6 +30,12 @@ func (r *GormRepository[T]) FindOne(ctx context.Context, condition interface{}, 
 	return &entity, err
 }
 
+func (r *GormRepository[T]) Find(ctx context.Context, condition interface{}, args ...interface{}) ([]T, error) {
+	var entities []T
+	err := r.DB.WithContext(ctx).Where(condition, args...).Find(&entities).Error
+	return entities, err
+}
+
 func (r *GormRepository[T]) FindAll(ctx context.Context) ([]T, error) {
 	var entities []T
 	err := r.DB.WithContext(ctx).Find(&entities).Error

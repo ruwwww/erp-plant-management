@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"server/internal/core/domain"
 	"server/internal/repository"
 )
@@ -9,17 +10,23 @@ import (
 type CatalogServiceImpl struct {
 	productRepo  repository.Repository[domain.Product]
 	categoryRepo repository.Repository[domain.Category]
+	variantRepo  repository.Repository[domain.ProductVariant]
 }
 
-func NewCatalogService(productRepo repository.Repository[domain.Product], categoryRepo repository.Repository[domain.Category]) CatalogService {
+func NewCatalogService(
+	productRepo repository.Repository[domain.Product],
+	categoryRepo repository.Repository[domain.Category],
+	variantRepo repository.Repository[domain.ProductVariant],
+) CatalogService {
 	return &CatalogServiceImpl{
 		productRepo:  productRepo,
 		categoryRepo: categoryRepo,
+		variantRepo:  variantRepo,
 	}
 }
 
 func (s *CatalogServiceImpl) GetProducts(ctx context.Context, filter ProductFilterParams) ([]domain.Product, int64, error) {
-	// TODO: Implement filtering and pagination
+	// TODO: Implement proper filtering
 	products, err := s.productRepo.FindAll(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -36,7 +43,7 @@ func (s *CatalogServiceImpl) GetCategories(ctx context.Context) ([]domain.Catego
 }
 
 func (s *CatalogServiceImpl) GetVariants(ctx context.Context, productID int) ([]domain.ProductVariant, error) {
-	return nil, nil
+	return s.variantRepo.Find(ctx, "product_id = ?", productID)
 }
 
 func (s *CatalogServiceImpl) CreateProduct(ctx context.Context, product *domain.Product) error {
@@ -48,6 +55,18 @@ func (s *CatalogServiceImpl) UpdateProduct(ctx context.Context, product *domain.
 }
 
 func (s *CatalogServiceImpl) UpdateVariants(ctx context.Context, productID int, variants []domain.ProductVariant) error {
+	for _, v := range variants {
+		v.ProductID = productID
+		if v.ID != 0 {
+			if err := s.variantRepo.Update(ctx, &v); err != nil {
+				return err
+			}
+		} else {
+			if err := s.variantRepo.Create(ctx, &v); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -66,9 +85,22 @@ func (s *CatalogServiceImpl) ForceDeleteProduct(ctx context.Context, id int) err
 }
 
 func (s *CatalogServiceImpl) ImportProducts(ctx context.Context, data []byte) error {
+	var products []domain.Product
+	if err := json.Unmarshal(data, &products); err != nil {
+		return err
+	}
+	for _, p := range products {
+		if err := s.productRepo.Create(ctx, &p); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (s *CatalogServiceImpl) ExportProducts(ctx context.Context) ([]byte, error) {
-	return nil, nil
+	products, err := s.productRepo.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(products)
 }
