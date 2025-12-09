@@ -16,14 +16,16 @@ type AdminHandler struct {
 	authService        service.AuthService
 	userService        service.UserService
 	procurementService service.ProcurementService
+	marketingService   service.MarketingService
 }
 
-func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService, userS service.UserService, procurementS service.ProcurementService) *AdminHandler {
+func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService, userS service.UserService, procurementS service.ProcurementService, marketingS service.MarketingService) *AdminHandler {
 	return &AdminHandler{
 		catalogService:     catalogS,
 		authService:        authS,
 		userService:        userS,
 		procurementService: procurementS,
+		marketingService:   marketingS,
 	}
 }
 
@@ -362,11 +364,55 @@ func (h *AdminHandler) ForceDeleteSupplier(c *fiber.Ctx) error {
 
 // Promotions
 func (h *AdminHandler) GetPromotions(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	promos, err := h.marketingService.GetPromotions(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(promos)
 }
 
 func (h *AdminHandler) CreatePromotion(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	var req dto.CreatePromotionRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	// Basic validation
+	if req.Name == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Name is required"})
+	}
+
+	promo := &domain.Promotion{
+		Name:        req.Name,
+		Code:        &req.Code,
+		IsExclusive: req.IsExclusive,
+		IsActive:    true,
+		Conditions:  req.Conditions,
+		Actions:     req.Actions,
+	}
+
+	if req.StartsAt != "" {
+		start, err := time.Parse(time.RFC3339, req.StartsAt)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid starts_at format"})
+		}
+		promo.StartsAt = &start
+	}
+
+	if req.EndsAt != "" {
+		end, err := time.Parse(time.RFC3339, req.EndsAt)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ends_at format"})
+		}
+		promo.EndsAt = &end
+	}
+
+	err := h.marketingService.CreatePromotion(c.Context(), promo)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(promo)
 }
 
 // Data

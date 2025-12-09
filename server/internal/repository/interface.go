@@ -117,3 +117,9 @@ type InvoiceRepository interface {
 	Repository[domain.Invoice]
 	FindByOrder(ctx context.Context, orderID int) (*domain.Invoice, error)
 }
+
+// 7. Marketing & Promotions
+type PromotionRepository interface {
+	Repository[domain.Promotion]
+	GetActivePromotions(ctx context.Context) ([]domain.Promotion, error)
+}
