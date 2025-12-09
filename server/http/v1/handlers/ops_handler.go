@@ -25,15 +25,51 @@ func NewOpsHandler(invS service.InventoryService, asmS service.AssemblyService, 
 
 // Inventory
 func (h *OpsHandler) GetLocations(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	locations, err := h.inventoryService.GetLocations(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(locations)
 }
 
 func (h *OpsHandler) CreateLocation(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	var req dto.CreateLocationRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	loc := &domain.InventoryLocation{
+		Name:      req.Name,
+		Type:      "WAREHOUSE", // Default, or add to DTO
+		AddressID: req.AddressID,
+		IsActive:  true,
+	}
+
+	if err := h.inventoryService.CreateLocation(c.Context(), loc); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(loc)
 }
 
 func (h *OpsHandler) GetMovements(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	variantID := c.QueryInt("variant_id", 0)
+	locationID := c.QueryInt("location_id", 0)
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 50)
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 50
+	}
+
+	movements, err := h.inventoryService.GetMovements(c.Context(), variantID, locationID, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"movements": movements})
 }
 
 func (h *OpsHandler) TransferStock(c *fiber.Ctx) error {
@@ -42,8 +78,10 @@ func (h *OpsHandler) TransferStock(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	// userID := c.Locals("userID").(int)
-	// if err := h.inventoryService.TransferStock(c.Context(), req.VariantID, req.Quantity, req.FromLocationID, req.ToLocationID, userID); err != nil { ... }
+	userID := c.Locals("userID").(int)
+	if err := h.inventoryService.TransferStock(c.Context(), req.VariantID, req.Quantity, req.FromLocationID, req.ToLocationID, userID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
 	return c.JSON(fiber.Map{"message": "Stock transferred"})
 }
@@ -54,13 +92,13 @@ func (h *OpsHandler) AdjustStock(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	// userID := c.Locals("userID").(int)
+	userID := c.Locals("userID").(int)
 	cmd := service.StockMoveCmd{
 		LocationID: req.LocationID,
 		VariantID:  req.VariantID,
 		QtyChange:  req.ChangeQty,
 		Reason:     domain.MovementReason(req.Reason),
-		// UserID: userID,
+		UserID:     userID,
 	}
 
 	if err := h.inventoryService.ExecuteMovement(c.Context(), cmd); err != nil {
@@ -71,11 +109,48 @@ func (h *OpsHandler) AdjustStock(c *fiber.Ctx) error {
 }
 
 func (h *OpsHandler) BulkAdjustStock(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	var req dto.BulkAdjustRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	userID := c.Locals("userID").(int)
+	var cmds []service.StockMoveCmd
+
+	for _, item := range req.Items {
+		currentQty, err := h.inventoryService.GetStockLevel(c.Context(), item.VariantID, item.LocationID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to get current stock"})
+		}
+
+		change := item.ActualQty - currentQty
+		if change != 0 {
+			cmds = append(cmds, service.StockMoveCmd{
+				LocationID: item.LocationID,
+				VariantID:  item.VariantID,
+				QtyChange:  change,
+				Reason:     domain.MovementReason(req.Reason),
+				UserID:     userID,
+			})
+		}
+	}
+
+	if err := h.inventoryService.BulkAdjustStock(c.Context(), cmds); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Bulk stock adjusted"})
 }
 
 func (h *OpsHandler) ExportStockSnapshot(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	data, err := h.inventoryService.ExportStockSnapshot(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", "attachment; filename=stock_snapshot.csv")
+	return c.Send(data)
 }
 
 // Assembly

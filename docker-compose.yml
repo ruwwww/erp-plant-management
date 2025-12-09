@@ -1,9 +1,7 @@
-version: "3.8"
-
 services:
-  # ==========================================
-  # THE GATEWAY (Entry Point)
-  # ==========================================
+  # ============================
+  # GATEWAY
+  # ============================
   gateway:
     image: nginx:alpine
     volumes:
@@ -16,63 +14,60 @@ services:
     networks:
       - frontend_net
 
-  # ==========================================
+  # ============================
   # APPLICATION FLEETS
-  # ==========================================
-
-  # 1. Customer Fleet (Storefront)
+  # ============================
   api_store:
     build: ./server
     environment:
       - APP_MODULE=store
-      - DB_HOST=db_primary
+      - DB_HOST=pgbouncer
       - DB_USER=admin
       - DB_PASSWORD=password
       - DB_NAME=plantshop
-      - DB_PORT=5432
+      - DB_PORT=6432
+      - JWT_SECRET=supersecretkey
     networks:
       - frontend_net
       - backend_net
-    deploy:
-      replicas: 2 # Dev: 2 instances
+    depends_on:
+      - pgbouncer
 
-  # 2. POS Fleet (Cashiers)
   api_pos:
     build: ./server
     environment:
       - APP_MODULE=pos
-      - DB_HOST=db_primary
+      - DB_HOST=pgbouncer
       - DB_USER=admin
       - DB_PASSWORD=password
       - DB_NAME=plantshop
-      - DB_PORT=5432
+      - DB_PORT=6432
+      - JWT_SECRET=supersecretkey
     networks:
       - frontend_net
       - backend_net
-  # 3. Internal Fleet (Admin/Ops)
+    depends_on:
+      - pgbouncer
+
   api_internal:
     build: ./server
     environment:
       - APP_MODULE=internal
-      - DB_HOST=db_primary
+      - DB_HOST=pgbouncer
       - DB_USER=admin
       - DB_PASSWORD=password
       - DB_NAME=plantshop
-      - DB_PORT=5432
-      - APP_MODULE=internal
-      - DB_WRITE_HOST=db_primary
-      - DB_READ_HOST=db_primary # Admin reads from Primary
+      - DB_PORT=6432
+      - JWT_SECRET=supersecretkey
     networks:
       - frontend_net
       - backend_net
-    deploy:
-      replicas: 2 # Dev: 2 instances
+    depends_on:
+      - pgbouncer
 
-  # ==========================================
-  # DATA LAYER
-  # ==========================================
-
-  # WRITE Database
+  # ============================
+  # DATABASE PRIMARY
+  # ============================
   db_primary:
     image: postgres:15-alpine
     environment:
@@ -80,27 +75,90 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: plantshop
     volumes:
-      - pg_data_primary:/var/lib/postgresql/data
+      - pg_primary_data:/var/lib/postgresql/data
+      - ./postgres/config:/etc/postgresql
     networks:
       - backend_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      retries: 5
 
-  # READ Database (Simulation for Dev)
-  # In Prod, this needs a replication script. In Dev, we just spin up a 2nd DB
-  # or point the app to the primary if you don't want to config replication locally.
-  db_replica:
+  # ============================
+  # DATABASE REPLICAS
+  # ============================
+  db_replica1:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
       POSTGRES_DB: plantshop
+    volumes:
+      - pg_replica1_data:/var/lib/postgresql/data
+      - ./postgres/config:/etc/postgresql
     networks:
       - backend_net
+    depends_on:
+      - db_primary
+    command: >
+      sh -c "
+      until pg_basebackup -h db_primary -D /var/lib/postgresql/data -U admin -v -P --wal-method=stream; do sleep 5; done
+      && postgres -c hot_standby=on
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      retries: 5
 
-  redis:
-    image: redis:alpine
+  db_replica2:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: plantshop
+    volumes:
+      - pg_replica2_data:/var/lib/postgresql/data
+      - ./postgres/config:/etc/postgresql
     networks:
       - backend_net
+    depends_on:
+      - db_primary
+    command: >
+      sh -c "
+      until pg_basebackup -h db_primary -D /var/lib/postgresql/data -U admin -v -P --wal-method=stream; do sleep 5; done
+      && postgres -c hot_standby=on
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      retries: 5
 
+  # ============================
+  # CONNECTION POOLER
+  # ============================
+  pgbouncer:
+    image: brainsam/pgbouncer:latest
+    environment:
+      DB_HOST: db_primary
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: password
+      DB_NAME: plantshop
+      POOL_MODE: session
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+    ports:
+      - "6432:6432"
+    networks:
+      - backend_net
+    depends_on:
+      - db_primary
+      - db_replica1
+      - db_replica2
+
+  # ============================
+  # MINIO STORAGE
+  # ============================
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -110,15 +168,23 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    volumes:
+      - minio_data:/data
     networks:
       - backend_net
 
-# ==========================================
-# NETWORKS & VOLUMES
-# ==========================================
+# ============================
+# NETWORKS
+# ============================
 networks:
-  frontend_net: # Gateway <-> Apps
-  backend_net: # Apps <-> DB/Redis (Gateway cannot see this)
+  frontend_net:
+  backend_net:
 
+# ============================
+# VOLUMES
+# ============================
 volumes:
-  pg_data_primary:
+  pg_primary_data:
+  pg_replica1_data:
+  pg_replica2_data:
+  minio_data:

@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"server/internal/core/domain"
 	"server/internal/repository"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -13,13 +15,15 @@ import (
 type InventoryServiceImpl struct {
 	stockRepo    repository.Repository[domain.Stock]
 	movementRepo repository.Repository[domain.StockMovement]
+	locationRepo repository.Repository[domain.InventoryLocation]
 	db           *gorm.DB // Needed for transaction
 }
 
-func NewInventoryService(stockRepo repository.Repository[domain.Stock], movementRepo repository.Repository[domain.StockMovement], db *gorm.DB) InventoryService {
+func NewInventoryService(stockRepo repository.Repository[domain.Stock], movementRepo repository.Repository[domain.StockMovement], locationRepo repository.Repository[domain.InventoryLocation], db *gorm.DB) InventoryService {
 	return &InventoryServiceImpl{
 		stockRepo:    stockRepo,
 		movementRepo: movementRepo,
+		locationRepo: locationRepo,
 		db:           db,
 	}
 }
@@ -135,17 +139,47 @@ func (s *InventoryServiceImpl) ExecuteMovement(ctx context.Context, cmd StockMov
 }
 
 func (s *InventoryServiceImpl) GetMovements(ctx context.Context, variantID, locationID, page, limit int) ([]domain.StockMovement, error) {
-	return nil, nil
+	offset := (page - 1) * limit
+	query := s.db.Model(&domain.StockMovement{}).Order("created_at DESC").Limit(limit).Offset(offset)
+
+	if variantID > 0 {
+		query = query.Where("variant_id = ?", variantID)
+	}
+	if locationID > 0 {
+		query = query.Where("location_id = ?", locationID)
+	}
+
+	var movements []domain.StockMovement
+	if err := query.Find(&movements).Error; err != nil {
+		return nil, err
+	}
+	return movements, nil
 }
 
 func (s *InventoryServiceImpl) GetLocations(ctx context.Context) ([]domain.InventoryLocation, error) {
-	return nil, nil
+	return s.locationRepo.FindAll(ctx)
 }
 
 func (s *InventoryServiceImpl) CreateLocation(ctx context.Context, loc *domain.InventoryLocation) error {
-	return nil
+	return s.locationRepo.Create(ctx, loc)
 }
 
 func (s *InventoryServiceImpl) ExportStockSnapshot(ctx context.Context) ([]byte, error) {
-	return nil, nil
+	var stocks []domain.Stock
+	if err := s.db.Preload("Location").Preload("Variant").Find(&stocks).Error; err != nil {
+		return nil, err
+	}
+
+	// Generate CSV
+	var csvData strings.Builder
+	csvData.WriteString("Location ID,Location Name,Variant ID,Variant Name,Quantity,Safety Stock\n")
+
+	for _, stock := range stocks {
+		locationName := stock.Location.Name
+		variantName := stock.Variant.Name
+		csvData.WriteString(fmt.Sprintf("%d,%s,%d,%s,%d,%d\n",
+			stock.LocationID, locationName, stock.VariantID, variantName, stock.Quantity, stock.SafetyStock))
+	}
+
+	return []byte(csvData.String()), nil
 }
