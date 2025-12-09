@@ -120,10 +120,3 @@ const (
 	InvoicePaid   InvoiceStatus = "PAID"
 	InvoiceVoid   InvoiceStatus = "VOID"
 )
-
-type CashMoveType string
-
-const (
-	CashAdd  CashMoveType = "ADD"
-	CashDrop CashMoveType = "DROP"
-)

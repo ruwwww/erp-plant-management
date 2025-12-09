@@ -22,3 +22,7 @@ func (s *FinanceServiceImpl) RecordPayment(ctx context.Context, invoiceID int, a
 	// TODO: Implement logic
 	return nil
 }
+
+func (s *FinanceServiceImpl) GetInvoicePDF(ctx context.Context, invoiceNumber string) (string, error) {
+	return "", nil
+}

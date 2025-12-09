@@ -100,6 +100,7 @@ func (h *StoreHandler) CheckoutPreview(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
+	// Map DTO to Domain
 	var items []domain.SalesOrderItem
 	for _, item := range req.Items {
 		items = append(items, domain.SalesOrderItem{
@@ -113,15 +114,7 @@ func (h *StoreHandler) CheckoutPreview(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// In a real app, we would also calculate shipping based on address here
-
-	return c.JSON(dto.CheckoutPreviewResponse{
-		Subtotal:       result.Subtotal,
-		DiscountAmount: result.DiscountAmount,
-		TaxAmount:      result.TaxAmount,
-		ShippingAmount: result.ShippingAmount,
-		TotalAmount:    result.TotalAmount,
-	})
+	return c.JSON(result)
 }
 
 func (h *StoreHandler) CheckoutPlace(c *fiber.Ctx) error {
@@ -130,14 +123,35 @@ func (h *StoreHandler) CheckoutPlace(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	// Construct Order
+	// 1. Calculate Totals (Re-verify price)
+	var items []domain.SalesOrderItem
+	for _, item := range req.Items {
+		items = append(items, domain.SalesOrderItem{
+			VariantID: item.VariantID,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	cartResult, err := h.cartService.CalculateCart(c.Context(), items, req.CouponCode)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// 2. Construct Order
 	order := &domain.SalesOrder{
 		// CustomerID: ... (get from context if logged in)
 		// ShippingAddressID: req.ShippingAddressID,
-		// ...
+		TotalAmount:    cartResult.TotalAmount,
+		SubtotalAmount: cartResult.Subtotal,
+		DiscountAmount: cartResult.DiscountAmount,
+		TaxAmount:      cartResult.TaxAmount,
+		ShippingAmount: cartResult.ShippingAmount,
+		Items:          cartResult.Items,
+		PaymentMethod:  req.PaymentMethod,
+		Status:         domain.OrderConfirmed, // Or Draft/Pending
 	}
 
-	// This is a simplified example. Real implementation needs to handle user context, address validation, etc.
+	// 3. Place Order
 	if err := h.orderService.PlaceOrder(c.Context(), order); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -146,5 +160,5 @@ func (h *StoreHandler) CheckoutPlace(c *fiber.Ctx) error {
 }
 
 func (h *StoreHandler) PaymentWebhook(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusOK)
+	return c.SendStatus(fiber.StatusNotImplemented)
 }

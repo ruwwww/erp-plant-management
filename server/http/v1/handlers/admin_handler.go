@@ -24,6 +24,10 @@ func NewAdminHandler(catalogS service.CatalogService, authS service.AuthService,
 }
 
 // Products
+func (h *AdminHandler) GetProducts(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 func (h *AdminHandler) CreateProduct(c *fiber.Ctx) error {
 	var req dto.CreateProductRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -67,7 +71,7 @@ func (h *AdminHandler) UpdateProduct(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Product updated"})
 }
 
-func (h *AdminHandler) DeleteProduct(c *fiber.Ctx) error {
+func (h *AdminHandler) SoftDeleteProduct(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
 	if err := h.catalogService.SoftDeleteProduct(c.Context(), id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -75,7 +79,45 @@ func (h *AdminHandler) DeleteProduct(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Product deleted"})
 }
 
+func (h *AdminHandler) RestoreProduct(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.catalogService.RestoreProduct(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Product restored"})
+}
+
+func (h *AdminHandler) ForceDeleteProduct(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+// Variants
+func (h *AdminHandler) GetVariants(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) UpdateVariants(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+// Media
+func (h *AdminHandler) UploadMedia(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) LinkMedia(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) UnlinkMedia(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 // Users
+func (h *AdminHandler) GetUsers(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 func (h *AdminHandler) CreateStaff(c *fiber.Ctx) error {
 	var req dto.CreateStaffRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -96,10 +138,63 @@ func (h *AdminHandler) CreateStaff(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Staff created", "id": user.ID})
 }
 
+func (h *AdminHandler) GetUserDetail(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) UpdateUser(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 func (h *AdminHandler) UpdateUserStatus(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
-func (h *AdminHandler) AssignRole(c *fiber.Ctx) error {
+func (h *AdminHandler) AdminResetPassword(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var req dto.AdminResetPasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if err := h.authService.ResetPassword(c.Context(), id, req.NewPassword); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Password reset"})
+}
+
+func (h *AdminHandler) AssignRoles(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+// CRM
+func (h *AdminHandler) GetSegments(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) TriggerEmailCampaign(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+// Promotions
+func (h *AdminHandler) GetPromotions(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) CreatePromotion(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+// Data
+func (h *AdminHandler) ExportProducts(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) ImportProducts(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *AdminHandler) ImportInventoryAdjustments(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }

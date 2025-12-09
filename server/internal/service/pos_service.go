@@ -35,3 +35,31 @@ func (s *POSServiceImpl) GetActiveSession(ctx context.Context, userID int) (*dom
 	// TODO: Implement logic
 	return nil, nil
 }
+
+func (s *POSServiceImpl) GetSessionDetails(ctx context.Context, sessionID int) (*domain.POSSession, error) {
+	return nil, nil
+}
+
+func (s *POSServiceImpl) GetCashMoves(ctx context.Context, sessionID int) ([]domain.POSCashMove, error) {
+	return nil, nil
+}
+
+func (s *POSServiceImpl) ScanProduct(ctx context.Context, barcode string) (*domain.ProductVariant, int, error) {
+	return nil, 0, nil
+}
+
+func (s *POSServiceImpl) SearchCustomer(ctx context.Context, query string) ([]domain.User, error) {
+	return nil, nil
+}
+
+func (s *POSServiceImpl) OverridePrice(ctx context.Context, variantID int, newPrice float64, managerPIN string) error {
+	return nil
+}
+
+func (s *POSServiceImpl) VoidOrder(ctx context.Context, orderID int, managerPIN string) error {
+	return nil
+}
+
+func (s *POSServiceImpl) PrintReceipt(ctx context.Context, orderID int) error {
+	return nil
+}

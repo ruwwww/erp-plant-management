@@ -29,3 +29,19 @@ func (s *OrderServiceImpl) ProcessReturn(ctx context.Context, orderID int, items
 	// TODO: Implement return logic
 	return nil
 }
+
+func (s *OrderServiceImpl) GetOrder(ctx context.Context, orderNumber string) (*domain.SalesOrder, error) {
+	return nil, nil
+}
+
+func (s *OrderServiceImpl) GetCustomerHistory(ctx context.Context, userID int, page, limit int) ([]domain.SalesOrder, error) {
+	return nil, nil
+}
+
+func (s *OrderServiceImpl) SubmitReview(ctx context.Context, review *domain.Review) error {
+	return nil
+}
+
+func (s *OrderServiceImpl) GetOrderList(ctx context.Context, filter OrderFilterParams) ([]domain.SalesOrder, int64, error) {
+	return nil, 0, nil
+}

@@ -24,6 +24,14 @@ func NewOpsHandler(invS service.InventoryService, asmS service.AssemblyService, 
 }
 
 // Inventory
+func (h *OpsHandler) GetLocations(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *OpsHandler) CreateLocation(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 func (h *OpsHandler) GetMovements(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
@@ -66,8 +74,24 @@ func (h *OpsHandler) BulkAdjustStock(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
+func (h *OpsHandler) ExportStockSnapshot(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
 // Assembly
-func (h *OpsHandler) GetAssemblies(c *fiber.Ctx) error {
+func (h *OpsHandler) GetRecipes(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *OpsHandler) CreateRecipe(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *OpsHandler) DeleteRecipe(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *OpsHandler) GetAssemblyLogs(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
@@ -83,12 +107,16 @@ func (h *OpsHandler) ExecuteAssembly(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Assembly executed"})
 }
 
-// Procurement
-func (h *OpsHandler) GetPOs(c *fiber.Ctx) error {
+func (h *OpsHandler) DisassembleKit(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
-func (h *OpsHandler) CreatePO(c *fiber.Ctx) error {
+// Procurement
+func (h *OpsHandler) GetPurchaseOrders(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *OpsHandler) CreatePurchaseOrder(c *fiber.Ctx) error {
 	var req dto.CreatePORequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
@@ -106,7 +134,7 @@ func (h *OpsHandler) CreatePO(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "PO created"})
 }
 
-func (h *OpsHandler) ReceivePO(c *fiber.Ctx) error {
+func (h *OpsHandler) ReceivePurchaseOrder(c *fiber.Ctx) error {
 	poID, _ := strconv.Atoi(c.Params("id"))
 	// Parse received items map
 
@@ -115,4 +143,17 @@ func (h *OpsHandler) ReceivePO(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "PO received"})
+}
+
+// Fulfillment
+func (h *OpsHandler) GetFulfillmentQueue(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *OpsHandler) PackOrder(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (h *OpsHandler) ShipOrder(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
 }

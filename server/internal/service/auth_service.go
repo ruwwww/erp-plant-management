@@ -55,6 +55,14 @@ func (s *AuthServiceImpl) Login(ctx context.Context, email, password string) (st
 	return accessToken, refreshToken, nil
 }
 
+func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (string, string, error) {
+	return "", "", nil
+}
+
+func (s *AuthServiceImpl) Logout(ctx context.Context, tokenString string) error {
+	return nil
+}
+
 func (s *AuthServiceImpl) RegisterStaff(ctx context.Context, user *domain.User, plainPassword string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -66,6 +74,14 @@ func (s *AuthServiceImpl) RegisterStaff(ctx context.Context, user *domain.User, 
 	user.IsActive = true
 
 	return s.userRepo.Create(ctx, user)
+}
+
+func (s *AuthServiceImpl) RequestPasswordReset(ctx context.Context, email string) error {
+	return nil
+}
+
+func (s *AuthServiceImpl) ConfirmPasswordReset(ctx context.Context, token, newPassword string) error {
+	return nil
 }
 
 func (s *AuthServiceImpl) ResetPassword(ctx context.Context, userID int, newPassword string) error {

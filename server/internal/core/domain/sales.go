@@ -13,6 +13,7 @@ type SalesOrder struct {
 	Channel                 OrderChannel           `gorm:"not null;default:'WEB'" json:"channel"`
 	Status                  OrderStatus            `gorm:"not null;default:'PENDING'" json:"status"`
 	PaymentStatus           PaymentStatus          `gorm:"not null;default:'UNPAID'" json:"payment_status"`
+	PaymentMethod           string                 `gorm:"size:50" json:"payment_method"`
 	ShipmentStatus          ShipmentStatus         `gorm:"not null;default:'PENDING'" json:"shipment_status"`
 	POSSessionID            *int                   `json:"pos_session_id"`
 	ShippingAddressSnapshot map[string]interface{} `gorm:"type:jsonb" json:"shipping_address_snapshot"`

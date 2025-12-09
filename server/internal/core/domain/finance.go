@@ -21,13 +21,6 @@ type Invoice struct {
 
 // POSSession moved to pos.go
 
-type Payment struct {
-	CashRegisterBalance *float64 `gorm:"type:decimal(12,2);default:0" json:"cash_register_balance"`
-	ClosingCashActual   *float64 `gorm:"type:decimal(12,2)" json:"closing_cash_actual"`
-	Difference          *float64 `gorm:"type:decimal(12,2)" json:"difference"`
-	Note                *string  `json:"note"`
-}
-
 type POSCashMove struct {
 	ID           int          `gorm:"primaryKey;autoIncrement" json:"id"`
 	POSSessionID int          `gorm:"not null" json:"pos_session_id"`

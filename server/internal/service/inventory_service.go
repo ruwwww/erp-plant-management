@@ -95,3 +95,19 @@ func (s *InventoryServiceImpl) BulkAdjustStock(ctx context.Context, cmds []Stock
 	// TODO: Implement bulk adjustment
 	return nil
 }
+
+func (s *InventoryServiceImpl) GetMovements(ctx context.Context, variantID, locationID, page, limit int) ([]domain.StockMovement, error) {
+	return nil, nil
+}
+
+func (s *InventoryServiceImpl) GetLocations(ctx context.Context) ([]domain.InventoryLocation, error) {
+	return nil, nil
+}
+
+func (s *InventoryServiceImpl) CreateLocation(ctx context.Context, loc *domain.InventoryLocation) error {
+	return nil
+}
+
+func (s *InventoryServiceImpl) ExportStockSnapshot(ctx context.Context) ([]byte, error) {
+	return nil, nil
+}

@@ -16,6 +16,10 @@ func NewProcurementService(poRepo repository.Repository[domain.PurchaseOrder]) P
 	}
 }
 
+func (s *ProcurementServiceImpl) GetPOs(ctx context.Context, page, limit int) ([]domain.PurchaseOrder, error) {
+	return nil, nil
+}
+
 func (s *ProcurementServiceImpl) CreatePO(ctx context.Context, po *domain.PurchaseOrder) error {
 	return s.poRepo.Create(ctx, po)
 }

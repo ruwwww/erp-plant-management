@@ -19,6 +19,7 @@ type AuthService interface {
 	RegisterStaff(ctx context.Context, user *domain.User, plainPassword string) error
 	RequestPasswordReset(ctx context.Context, email string) error
 	ConfirmPasswordReset(ctx context.Context, token, newPassword string) error
+	ResetPassword(ctx context.Context, userID int, newPassword string) error
 }
 
 type UserService interface {
