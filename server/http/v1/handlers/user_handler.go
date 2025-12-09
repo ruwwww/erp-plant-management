@@ -24,10 +24,15 @@ func NewUserHandler(userS service.UserService, orderS service.OrderService, fina
 }
 
 func (h *UserHandler) GetProfile(c *fiber.Ctx) error {
-	// userID := c.Locals("userID").(int)
-	// user, err := h.userService.GetProfile(c.Context(), userID)
-	// ...
-	return c.SendStatus(fiber.StatusOK)
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+	user, err := h.userService.GetProfile(c.Context(), userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(user)
 }
 
 func (h *UserHandler) UpdateProfile(c *fiber.Ctx) error {
@@ -36,9 +41,13 @@ func (h *UserHandler) UpdateProfile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	// userID := c.Locals("userID").(int)
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
 	user := &domain.User{
-		// ID: userID,
+		ID:        userID,
 		FirstName: &req.FirstName,
 		LastName:  &req.LastName,
 		Phone:     &req.Phone,
@@ -64,7 +73,11 @@ func (h *UserHandler) CreateAddress(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	// userID := c.Locals("userID").(int)
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
 	addr := &domain.Address{
 		Line1:      req.Line1,
 		Line2:      &req.Line2,
@@ -76,9 +89,11 @@ func (h *UserHandler) CreateAddress(c *fiber.Ctx) error {
 		Longitude:  &req.Longitude,
 	}
 
-	// if err := h.userService.AddAddress(c.Context(), userID, addr); err != nil { ... }
+	if err := h.userService.AddAddress(c.Context(), userID, addr); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Address created"})
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Address created", "id": addr.ID})
 }
 
 func (h *UserHandler) UpdateAddress(c *fiber.Ctx) error {

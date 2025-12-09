@@ -1,15 +1,13 @@
 package middleware
 
 import (
+	"os"
 	"server/internal/core/domain"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
-
-// Config for your JWT secret
-var jwtSecret = []byte("YOUR_SUPER_SECRET_KEY")
 
 // 1. Protect: Validates JWT and injects UserID/Role into Context
 func Protect() fiber.Handler {
@@ -23,7 +21,7 @@ func Protect() fiber.Handler {
 		tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
 
 		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-			return jwtSecret, nil
+			return []byte(os.Getenv("JWT_SECRET")), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -36,7 +34,13 @@ func Protect() fiber.Handler {
 		}
 
 		// Inject into context for Handlers to use
-		c.Locals("user_id", claims["user_id"])
+		// JWT numbers are float64
+		if sub, ok := claims["sub"].(float64); ok {
+			c.Locals("userID", int(sub))
+		} else {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token subject"})
+		}
+
 		c.Locals("role", claims["role"])
 
 		return c.Next()

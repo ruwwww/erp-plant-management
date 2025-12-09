@@ -14,8 +14,8 @@ type AuthService interface {
 }
 
 type UserService interface {
+	GetProfile(ctx context.Context, userID int) (*domain.User, error)
 	UpdateProfile(ctx context.Context, user *domain.User) error
-
 	AddAddress(ctx context.Context, userID int, addr *domain.Address) error
 	UpdateAddress(ctx context.Context, addr *domain.Address) error
 	DeleteAddress(ctx context.Context, userID, addressID int) error

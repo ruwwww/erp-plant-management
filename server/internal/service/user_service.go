@@ -18,6 +18,18 @@ func NewUserService(userRepo repository.Repository[domain.User], addrRepo reposi
 	}
 }
 
+func (s *UserServiceImpl) GetProfile(ctx context.Context, userID int) (*domain.User, error) {
+	// 1. Call Repository
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	user.PasswordHash = nil
+
+	return user, nil
+}
+
 func (s *UserServiceImpl) UpdateProfile(ctx context.Context, user *domain.User) error {
 	return s.userRepo.Update(ctx, user)
 }
