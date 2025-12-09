@@ -138,7 +138,8 @@ func (h *AdminHandler) RestoreProduct(c *fiber.Ctx) error {
 }
 
 func (h *AdminHandler) ForceDeleteProduct(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	id, _ := strconv.Atoi(c.Params("id"))
+	return h.catalogService.ForceDeleteProduct(c.Context(), id)
 }
 
 // Variants
