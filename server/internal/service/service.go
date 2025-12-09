@@ -224,6 +224,8 @@ type MarketingService interface {
 	// Promotions
 	GetPromotions(ctx context.Context) ([]domain.Promotion, error)
 	CreatePromotion(ctx context.Context, promo *domain.Promotion) error
+	UpdatePromotion(ctx context.Context, id int, req dto.UpdatePromotionRequest) error
+	DeletePromotion(ctx context.Context, id int) error // Soft delete
 
 	// CRM
 	GetSegments(ctx context.Context) ([]string, error) // e.g., "Big Spenders", "Inactive"

@@ -201,6 +201,8 @@ func SetupRoutes(
 		// Promotions
 		admin.Get("/promotions", adminH.GetPromotions)
 		admin.Post("/promotions", adminH.CreatePromotion)
+		admin.Put("/promotions/:id", adminH.UpdatePromotion)
+		admin.Delete("/promotions/:id", adminH.DeletePromotion)
 
 		// Data Import/Export
 		admin.Get("/data/products/export", adminH.ExportProducts)

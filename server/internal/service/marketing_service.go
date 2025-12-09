@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"server/internal/core/domain"
+	"server/internal/dto"
 	"server/internal/repository"
+	"time"
 
 	"github.com/expr-lang/expr"
 	"gorm.io/gorm"
@@ -36,6 +38,66 @@ func (s *marketingService) CreatePromotion(ctx context.Context, promo *domain.Pr
 		promo.Actions = map[string]interface{}{}
 	}
 	return s.promoRepo.Create(ctx, promo)
+}
+
+func (s *marketingService) UpdatePromotion(ctx context.Context, id int, req dto.UpdatePromotionRequest) error {
+	promo, err := s.promoRepo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Update fields if provided
+	if req.Name != nil {
+		promo.Name = *req.Name
+	}
+	if req.Code != nil {
+		promo.Code = req.Code
+	}
+	if req.Description != nil {
+		promo.Description = req.Description
+	}
+	if req.IsActive != nil {
+		promo.IsActive = *req.IsActive
+	}
+	if req.StartsAt != nil {
+		start, err := time.Parse(time.RFC3339, *req.StartsAt)
+		if err != nil {
+			return errors.New("invalid starts_at format")
+		}
+		promo.StartsAt = &start
+	}
+	if req.EndsAt != nil {
+		end, err := time.Parse(time.RFC3339, *req.EndsAt)
+		if err != nil {
+			return errors.New("invalid ends_at format")
+		}
+		promo.EndsAt = &end
+	}
+	if req.Conditions != nil {
+		promo.Conditions = req.Conditions
+	}
+	if req.Actions != nil {
+		promo.Actions = req.Actions
+	}
+	if req.TotalUsageLimit != nil {
+		promo.TotalUsageLimit = req.TotalUsageLimit
+	}
+
+	return s.promoRepo.Update(ctx, promo)
+}
+
+func (s *marketingService) DeletePromotion(ctx context.Context, id int) error {
+	promo, err := s.promoRepo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Soft delete: set is_active = false and ends_at = now
+	now := time.Now()
+	promo.IsActive = false
+	promo.EndsAt = &now
+
+	return s.promoRepo.Update(ctx, promo)
 }
 
 // EvaluatePromotion checks if a promotion's conditions are met for given data

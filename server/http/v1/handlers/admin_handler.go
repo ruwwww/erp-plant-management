@@ -415,7 +415,38 @@ func (h *AdminHandler) CreatePromotion(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(promo)
 }
 
-// Data
+func (h *AdminHandler) UpdatePromotion(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
+	var req dto.UpdatePromotionRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	err = h.marketingService.UpdatePromotion(c.Context(), id, req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Promotion updated successfully"})
+}
+
+func (h *AdminHandler) DeletePromotion(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
+	err = h.marketingService.DeletePromotion(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Promotion deleted (soft delete)"})
+}
 func (h *AdminHandler) ExportProducts(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }

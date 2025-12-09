@@ -109,6 +109,18 @@ type CreatePromotionRequest struct {
 	EndsAt      string                 `json:"ends_at"`
 }
 
+type UpdatePromotionRequest struct {
+	Name            *string                `json:"name"`
+	Code            *string                `json:"code"`
+	Description     *string                `json:"description"`
+	IsActive        *bool                  `json:"is_active"`
+	StartsAt        *string                `json:"starts_at"` // ISO8601
+	EndsAt          *string                `json:"ends_at"`   // ISO8601
+	Conditions      map[string]interface{} `json:"conditions"`
+	Actions         map[string]interface{} `json:"actions"`
+	TotalUsageLimit *int                   `json:"total_usage_limit"`
+}
+
 // --- Media ---
 type LinkMediaRequest struct {
 	MediaIDs   []int  `json:"media_ids" validate:"required"`
