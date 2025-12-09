@@ -21,9 +21,18 @@ type CreateAddressRequest struct {
 }
 
 type UpdateAddressRequest struct {
-	// Same as Create, all optional
-	Line1 string `json:"line1"`
-	// ... rest of fields
+	Line1      string  `json:"line1"`
+	Line2      string  `json:"line2"`
+	City       string  `json:"city"`
+	State      string  `json:"state"`
+	PostalCode string  `json:"postal_code"`
+	Country    string  `json:"country"`
+	Latitude   float64 `json:"latitude"`
+	Longitude  float64 `json:"longitude"`
+}
+
+type SetDefaultAddressRequest struct {
+	IsBilling bool `json:"is_billing"`
 }
 
 // Orders

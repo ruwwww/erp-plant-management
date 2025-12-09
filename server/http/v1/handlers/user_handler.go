@@ -63,8 +63,16 @@ func (h *UserHandler) UpdateProfile(c *fiber.Ctx) error {
 
 // Addresses
 func (h *UserHandler) GetAddresses(c *fiber.Ctx) error {
-	// TODO: Implement GetAddresses in UserService
-	return c.SendStatus(fiber.StatusNotImplemented)
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	addresses, err := h.userService.GetAddresses(c.Context(), userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(addresses)
 }
 
 func (h *UserHandler) CreateAddress(c *fiber.Ctx) error {
@@ -97,15 +105,101 @@ func (h *UserHandler) CreateAddress(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) UpdateAddress(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	addressID, _ := strconv.Atoi(c.Params("id"))
+
+	var req dto.UpdateAddressRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	// Get existing address to update
+	addresses, err := h.userService.GetAddresses(c.Context(), userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	var addr *domain.Address
+	for i := range addresses {
+		if addresses[i].ID == addressID {
+			addr = &addresses[i]
+			break
+		}
+	}
+	if addr == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Address not found"})
+	}
+
+	// Update fields if provided
+	if req.Line1 != "" {
+		addr.Line1 = req.Line1
+	}
+	if req.Line2 != "" {
+		addr.Line2 = &req.Line2
+	}
+	if req.City != "" {
+		addr.City = req.City
+	}
+	if req.State != "" {
+		addr.State = &req.State
+	}
+	if req.PostalCode != "" {
+		addr.PostalCode = &req.PostalCode
+	}
+	if req.Country != "" {
+		addr.Country = req.Country
+	}
+	if req.Latitude != 0 {
+		addr.Latitude = &req.Latitude
+	}
+	if req.Longitude != 0 {
+		addr.Longitude = &req.Longitude
+	}
+
+	if err := h.userService.UpdateAddress(c.Context(), addr); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Address updated"})
 }
 
 func (h *UserHandler) DeleteAddress(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	addressID, _ := strconv.Atoi(c.Params("id"))
+
+	if err := h.userService.DeleteAddress(c.Context(), userID, addressID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Address deleted"})
 }
 
 func (h *UserHandler) SetDefaultAddress(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	addressID, _ := strconv.Atoi(c.Params("id"))
+
+	var req dto.SetDefaultAddressRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if err := h.userService.SetDefaultAddress(c.Context(), userID, addressID, req.IsBilling); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Default address set"})
 }
 
 // Orders
