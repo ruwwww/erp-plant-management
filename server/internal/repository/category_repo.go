@@ -24,6 +24,11 @@ func (r *categoryRepository) GetTree(ctx context.Context) ([]domain.Category, er
 	return categories, err
 }
 
+func (r *categoryRepository) SoftDelete(ctx context.Context, id int) error {
+	var category domain.Category
+	return r.DB.WithContext(ctx).Delete(&category, id).Error
+}
+
 func (r *categoryRepository) Restore(ctx context.Context, id int) error {
 	var category domain.Category
 	if err := r.DB.WithContext(ctx).Unscoped().First(&category, id).Error; err != nil {

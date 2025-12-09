@@ -39,7 +39,7 @@ func main() {
 	// Services
 	authService := service.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
 	userService := service.NewUserService(userRepo, addrRepo)
-	catalogService := service.NewCatalogService(productRepo, categoryRepo, variantRepo)
+	catalogService := service.NewCatalogService(productRepo, categoryRepo, variantRepo, database.DB)
 	cartService := service.NewCartService()
 	orderService := service.NewOrderService(orderRepo)
 	inventoryService := service.NewInventoryService(stockRepo, movementRepo, database.DB)

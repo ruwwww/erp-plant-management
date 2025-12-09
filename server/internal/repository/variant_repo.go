@@ -15,6 +15,11 @@ func NewVariantRepository(db *gorm.DB) VariantRepository {
 	return &variantRepository{NewGormRepository[domain.ProductVariant](db)}
 }
 
+func (r *variantRepository) SoftDelete(ctx context.Context, id int) error {
+	var variant domain.ProductVariant
+	return r.DB.WithContext(ctx).Delete(&variant, id).Error
+}
+
 func (r *variantRepository) Restore(ctx context.Context, id int) error {
 	var variant domain.ProductVariant
 	if err := r.DB.WithContext(ctx).Unscoped().First(&variant, id).Error; err != nil {

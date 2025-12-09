@@ -19,6 +19,11 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 	return r.FindOne(ctx, "email = ?", email)
 }
 
+func (r *userRepository) SoftDelete(ctx context.Context, id int) error {
+	var user domain.User
+	return r.DB.WithContext(ctx).Delete(&user, id).Error
+}
+
 func (r *userRepository) Restore(ctx context.Context, id int) error {
 	var user domain.User
 	if err := r.DB.WithContext(ctx).Unscoped().First(&user, id).Error; err != nil {

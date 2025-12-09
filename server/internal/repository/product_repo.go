@@ -74,5 +74,5 @@ func (r *productRepository) Restore(ctx context.Context, id int) error {
 func (r *productRepository) ForceDelete(ctx context.Context, id int) error {
 	var product domain.Product
 
-	return r.DB.WithContext(ctx).Unscoped().Delete(&product).Error
+	return r.DB.WithContext(ctx).Unscoped().Delete(&product, id).Error
 }

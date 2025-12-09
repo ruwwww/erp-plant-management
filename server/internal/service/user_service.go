@@ -95,7 +95,7 @@ func (s *UserServiceImpl) AssignRoles(ctx context.Context, userID int, role doma
 }
 
 func (s *UserServiceImpl) SoftDeleteUser(ctx context.Context, userID int) error {
-	return s.userRepo.Delete(ctx, userID)
+	return s.userRepo.SoftDelete(ctx, userID)
 }
 
 func (s *UserServiceImpl) RestoreUser(ctx context.Context, userID int) error {

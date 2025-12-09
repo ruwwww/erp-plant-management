@@ -66,7 +66,7 @@ func (s *OrderServiceImpl) GetOrderList(ctx context.Context, filter OrderFilterP
 }
 
 func (s *OrderServiceImpl) SoftDeleteOrder(ctx context.Context, orderID int) error {
-	return s.orderRepo.Delete(ctx, orderID)
+	return s.orderRepo.SoftDelete(ctx, orderID)
 }
 
 func (s *OrderServiceImpl) RestoreOrder(ctx context.Context, orderID int) error {

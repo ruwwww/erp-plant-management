@@ -35,6 +35,11 @@ func (r *orderRepository) GetByPOSSession(ctx context.Context, sessionID int) ([
 	return orders, err
 }
 
+func (r *orderRepository) SoftDelete(ctx context.Context, id int) error {
+	var order domain.SalesOrder
+	return r.DB.WithContext(ctx).Delete(&order, id).Error
+}
+
 func (r *orderRepository) Restore(ctx context.Context, id int) error {
 	var order domain.SalesOrder
 	if err := r.DB.WithContext(ctx).Unscoped().First(&order, id).Error; err != nil {

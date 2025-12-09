@@ -20,6 +20,7 @@ type Repository[T any] interface {
 type UserRepository interface {
 	Repository[domain.User]
 	FindByEmail(ctx context.Context, email string) (*domain.User, error)
+	SoftDelete(ctx context.Context, id int) error
 	Restore(ctx context.Context, id int) error
 	ForceDelete(ctx context.Context, id int) error
 }
@@ -31,6 +32,8 @@ type ProductRepository interface {
 	GetFullProduct(ctx context.Context, slug string) (*domain.Product, error)
 	// Search supports complex filtering
 	Search(ctx context.Context, filter map[string]interface{}, page, limit int) ([]domain.Product, int64, error)
+	// SoftDelete soft deletes a product
+	SoftDelete(ctx context.Context, id int) error
 	// Restore restores a soft-deleted product
 	Restore(ctx context.Context, id int) error
 	// ForceDelete permanently deletes a product
@@ -39,6 +42,7 @@ type ProductRepository interface {
 
 type VariantRepository interface {
 	Repository[domain.ProductVariant]
+	SoftDelete(ctx context.Context, id int) error
 	Restore(ctx context.Context, id int) error
 	ForceDelete(ctx context.Context, id int) error
 }
@@ -46,6 +50,7 @@ type VariantRepository interface {
 type CategoryRepository interface {
 	Repository[domain.Category]
 	GetTree(ctx context.Context) ([]domain.Category, error)
+	SoftDelete(ctx context.Context, id int) error
 	Restore(ctx context.Context, id int) error
 	ForceDelete(ctx context.Context, id int) error
 }
@@ -56,6 +61,7 @@ type OrderRepository interface {
 	// GetFullOrder loads Items, Customer, and Payment info
 	GetFullOrder(ctx context.Context, orderNumber string) (*domain.SalesOrder, error)
 	GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error)
+	SoftDelete(ctx context.Context, id int) error
 	Restore(ctx context.Context, id int) error
 	ForceDelete(ctx context.Context, id int) error
 }
@@ -93,6 +99,7 @@ type AssemblyRepository interface {
 
 type SupplierRepository interface {
 	Repository[domain.Supplier]
+	SoftDelete(ctx context.Context, id int) error
 	Restore(ctx context.Context, id int) error
 	ForceDelete(ctx context.Context, id int) error
 }

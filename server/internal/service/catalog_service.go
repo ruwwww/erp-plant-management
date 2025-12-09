@@ -108,7 +108,7 @@ func (s *CatalogServiceImpl) UpdateVariants(ctx context.Context, productID int, 
 
 func (s *CatalogServiceImpl) SoftDeleteProduct(ctx context.Context, id int) error {
 	// TODO: Implement soft delete logic (set DeletedAt)
-	return s.productRepo.Delete(ctx, id)
+	return s.productRepo.SoftDelete(ctx, id)
 }
 
 func (s *CatalogServiceImpl) RestoreProduct(ctx context.Context, id int) error {
@@ -120,7 +120,7 @@ func (s *CatalogServiceImpl) ForceDeleteProduct(ctx context.Context, id int) err
 }
 
 func (s *CatalogServiceImpl) SoftDeleteVariant(ctx context.Context, id int) error {
-	return s.variantRepo.Delete(ctx, id)
+	return s.variantRepo.SoftDelete(ctx, id)
 }
 
 func (s *CatalogServiceImpl) RestoreVariant(ctx context.Context, id int) error {

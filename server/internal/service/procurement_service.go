@@ -49,7 +49,7 @@ func (s *ProcurementServiceImpl) UpdateSupplier(ctx context.Context, supplier *d
 }
 
 func (s *ProcurementServiceImpl) SoftDeleteSupplier(ctx context.Context, id int) error {
-	return s.supplierRepo.Delete(ctx, id)
+	return s.supplierRepo.SoftDelete(ctx, id)
 }
 
 func (s *ProcurementServiceImpl) RestoreSupplier(ctx context.Context, id int) error {
