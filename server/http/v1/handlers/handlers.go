@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"server/internal/service"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,9 +13,7 @@ import (
 // ==========================================
 // 1. AUTH HANDLER
 // ==========================================
-type AuthHandler struct {
-	authService *service.AuthService
-}
+type AuthHandler struct{}
 
 func (h *AuthHandler) Login(c *fiber.Ctx) error                { return c.SendStatus(200) }
 func (h *AuthHandler) Refresh(c *fiber.Ctx) error              { return c.SendStatus(200) }

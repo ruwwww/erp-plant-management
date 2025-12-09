@@ -36,6 +36,13 @@ const (
 	ReasonReturn              MovementReason = "RETURN"
 )
 
+type CashMoveType string
+
+const (
+	CashMoveAdd  CashMoveType = "ADD"
+	CashMoveDrop CashMoveType = "DROP"
+)
+
 type POSSessionStatus string
 
 const (

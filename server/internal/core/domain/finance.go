@@ -19,19 +19,13 @@ type Invoice struct {
 	UpdatedAt       time.Time     `json:"updated_at"`
 }
 
-type POSSession struct {
-	ID                  int              `gorm:"primaryKey;autoIncrement" json:"id"`
-	UserID              int              `gorm:"not null" json:"user_id"`
-	User                *User            `gorm:"foreignKey:UserID" json:"user"`
-	Name                *string          `gorm:"size:100" json:"name"`
-	Status              POSSessionStatus `gorm:"not null;default:'OPENING_CONTROL'" json:"status"`
-	OpenedAt            time.Time        `gorm:"not null;default:current_timestamp" json:"opened_at"`
-	ClosedAt            *time.Time       `json:"closed_at"`
-	OpeningCash         float64          `gorm:"not null;type:decimal(12,2);default:0" json:"opening_cash"`
-	CashRegisterBalance *float64         `gorm:"type:decimal(12,2);default:0" json:"cash_register_balance"`
-	ClosingCashActual   *float64         `gorm:"type:decimal(12,2)" json:"closing_cash_actual"`
-	Difference          *float64         `gorm:"type:decimal(12,2)" json:"difference"`
-	Note                *string          `json:"note"`
+// POSSession moved to pos.go
+
+type Payment struct {
+	CashRegisterBalance *float64 `gorm:"type:decimal(12,2);default:0" json:"cash_register_balance"`
+	ClosingCashActual   *float64 `gorm:"type:decimal(12,2)" json:"closing_cash_actual"`
+	Difference          *float64 `gorm:"type:decimal(12,2)" json:"difference"`
+	Note                *string  `json:"note"`
 }
 
 type POSCashMove struct {
