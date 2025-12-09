@@ -7,11 +7,11 @@ import (
 )
 
 type UserServiceImpl struct {
-	userRepo repository.Repository[domain.User]
+	userRepo repository.UserRepository
 	addrRepo repository.Repository[domain.Address]
 }
 
-func NewUserService(userRepo repository.Repository[domain.User], addrRepo repository.Repository[domain.Address]) UserService {
+func NewUserService(userRepo repository.UserRepository, addrRepo repository.Repository[domain.Address]) UserService {
 	return &UserServiceImpl{
 		userRepo: userRepo,
 		addrRepo: addrRepo,
@@ -35,10 +35,6 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, user *domain.User) 
 }
 
 func (s *UserServiceImpl) GetAddresses(ctx context.Context, userID int) ([]domain.Address, error) {
-	// Assuming Address has UserID field, but domain definition showed AddressID in User/Location?
-	// Let's check domain/misc.go or similar. Assuming Address is linked to User via UserAddress table or UserID in Address.
-	// Based on AddAddress TODO "Link address to user", it seems we need to handle the link.
-	// For now, assuming Address has UserID.
 	return s.addrRepo.Find(ctx, "user_id = ?", userID)
 }
 
@@ -96,4 +92,16 @@ func (s *UserServiceImpl) AssignRoles(ctx context.Context, userID int, role doma
 	}
 	user.Role = role
 	return s.userRepo.Update(ctx, user)
+}
+
+func (s *UserServiceImpl) SoftDeleteUser(ctx context.Context, userID int) error {
+	return s.userRepo.Delete(ctx, userID)
+}
+
+func (s *UserServiceImpl) RestoreUser(ctx context.Context, userID int) error {
+	return s.userRepo.Restore(ctx, userID)
+}
+
+func (s *UserServiceImpl) ForceDeleteUser(ctx context.Context, userID int) error {
+	return s.userRepo.ForceDelete(ctx, userID)
 }

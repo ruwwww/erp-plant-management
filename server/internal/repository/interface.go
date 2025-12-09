@@ -20,6 +20,8 @@ type Repository[T any] interface {
 type UserRepository interface {
 	Repository[domain.User]
 	FindByEmail(ctx context.Context, email string) (*domain.User, error)
+	Restore(ctx context.Context, id int) error
+	ForceDelete(ctx context.Context, id int) error
 }
 
 // 3. Catalog (Product & Category)
@@ -29,11 +31,23 @@ type ProductRepository interface {
 	GetFullProduct(ctx context.Context, slug string) (*domain.Product, error)
 	// Search supports complex filtering
 	Search(ctx context.Context, filter map[string]interface{}, page, limit int) ([]domain.Product, int64, error)
+	// Restore restores a soft-deleted product
+	Restore(ctx context.Context, id int) error
+	// ForceDelete permanently deletes a product
+	ForceDelete(ctx context.Context, id int) error
+}
+
+type VariantRepository interface {
+	Repository[domain.ProductVariant]
+	Restore(ctx context.Context, id int) error
+	ForceDelete(ctx context.Context, id int) error
 }
 
 type CategoryRepository interface {
 	Repository[domain.Category]
 	GetTree(ctx context.Context) ([]domain.Category, error)
+	Restore(ctx context.Context, id int) error
+	ForceDelete(ctx context.Context, id int) error
 }
 
 // 4. Sales & POS
@@ -42,6 +56,8 @@ type OrderRepository interface {
 	// GetFullOrder loads Items, Customer, and Payment info
 	GetFullOrder(ctx context.Context, orderNumber string) (*domain.SalesOrder, error)
 	GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error)
+	Restore(ctx context.Context, id int) error
+	ForceDelete(ctx context.Context, id int) error
 }
 
 type POSSessionRepository interface {
@@ -73,6 +89,12 @@ type MovementRepository interface {
 type AssemblyRepository interface {
 	Repository[domain.StockAssembly]
 	GetRecipe(ctx context.Context, variantID int) ([]domain.ProductRecipe, error)
+}
+
+type SupplierRepository interface {
+	Repository[domain.Supplier]
+	Restore(ctx context.Context, id int) error
+	ForceDelete(ctx context.Context, id int) error
 }
 
 type PurchaseOrderRepository interface {

@@ -43,6 +43,11 @@ type UserService interface {
 	GetUserDetail(ctx context.Context, targetUserID int) (*domain.User, error)
 	UpdateUserStatus(ctx context.Context, userID int, isActive bool) error // Ban/Unban
 	AssignRoles(ctx context.Context, userID int, role domain.UserRole) error
+
+	// Soft Delete / Restore
+	SoftDeleteUser(ctx context.Context, userID int) error
+	RestoreUser(ctx context.Context, userID int) error
+	ForceDeleteUser(ctx context.Context, userID int) error
 }
 
 type UserFilterParams struct {
@@ -81,6 +86,10 @@ type CatalogService interface {
 	SoftDeleteProduct(ctx context.Context, id int) error
 	RestoreProduct(ctx context.Context, id int) error
 	ForceDeleteProduct(ctx context.Context, id int) error // Hard delete
+
+	SoftDeleteVariant(ctx context.Context, id int) error
+	RestoreVariant(ctx context.Context, id int) error
+	ForceDeleteVariant(ctx context.Context, id int) error
 
 	// Data Operations
 	ImportProducts(ctx context.Context, data []byte) error // Process CSV/JSON
@@ -124,6 +133,9 @@ type OrderService interface {
 
 	// Admin
 	GetOrderList(ctx context.Context, filter OrderFilterParams) ([]domain.SalesOrder, int64, error)
+	SoftDeleteOrder(ctx context.Context, orderID int) error
+	RestoreOrder(ctx context.Context, orderID int) error
+	ForceDeleteOrder(ctx context.Context, orderID int) error
 }
 
 type OrderFilterParams struct {
@@ -204,6 +216,13 @@ type ProcurementService interface {
 	GetPOs(ctx context.Context, page, limit int) ([]domain.PurchaseOrder, error)
 	CreatePO(ctx context.Context, po *domain.PurchaseOrder) error
 	ReceivePO(ctx context.Context, poID int, receivedItems map[int]int) error
+
+	// Supplier Management
+	CreateSupplier(ctx context.Context, supplier *domain.Supplier) error
+	UpdateSupplier(ctx context.Context, supplier *domain.Supplier) error
+	SoftDeleteSupplier(ctx context.Context, id int) error
+	RestoreSupplier(ctx context.Context, id int) error
+	ForceDeleteSupplier(ctx context.Context, id int) error
 }
 
 type FulfillmentService interface {

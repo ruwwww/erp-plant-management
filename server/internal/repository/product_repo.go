@@ -54,3 +54,25 @@ func (r *productRepository) Search(ctx context.Context, filter map[string]interf
 
 	return products, total, err
 }
+
+func (r *productRepository) SoftDelete(ctx context.Context, id int) error {
+	var product domain.Product
+	return r.DB.WithContext(ctx).Delete(&product, id).Error
+}
+
+func (r *productRepository) Restore(ctx context.Context, id int) error {
+	var product domain.Product
+	// Find the record (including soft deleted)
+	if err := r.DB.WithContext(ctx).Unscoped().First(&product, id).Error; err != nil {
+		return err
+	}
+	// Update DeletedAt to nil
+	return r.DB.WithContext(ctx).Unscoped().Model(&product).Update("DeletedAt", nil).Error
+}
+
+// ForceDelete permanently deletes a product if only it has no sales records
+func (r *productRepository) ForceDelete(ctx context.Context, id int) error {
+	var product domain.Product
+
+	return r.DB.WithContext(ctx).Unscoped().Delete(&product).Error
+}

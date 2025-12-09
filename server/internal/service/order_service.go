@@ -7,10 +7,10 @@ import (
 )
 
 type OrderServiceImpl struct {
-	orderRepo repository.Repository[domain.SalesOrder]
+	orderRepo repository.OrderRepository
 }
 
-func NewOrderService(orderRepo repository.Repository[domain.SalesOrder]) OrderService {
+func NewOrderService(orderRepo repository.OrderRepository) OrderService {
 	return &OrderServiceImpl{
 		orderRepo: orderRepo,
 	}
@@ -63,4 +63,16 @@ func (s *OrderServiceImpl) GetOrderList(ctx context.Context, filter OrderFilterP
 		return nil, 0, err
 	}
 	return orders, int64(len(orders)), nil
+}
+
+func (s *OrderServiceImpl) SoftDeleteOrder(ctx context.Context, orderID int) error {
+	return s.orderRepo.Delete(ctx, orderID)
+}
+
+func (s *OrderServiceImpl) RestoreOrder(ctx context.Context, orderID int) error {
+	return s.orderRepo.Restore(ctx, orderID)
+}
+
+func (s *OrderServiceImpl) ForceDeleteOrder(ctx context.Context, orderID int) error {
+	return s.orderRepo.ForceDelete(ctx, orderID)
 }

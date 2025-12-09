@@ -23,17 +23,18 @@ func main() {
 	database.Connect()
 
 	// Repositories
-	userRepo := repository.NewGormRepository[domain.User](database.DB)
+	userRepo := repository.NewUserRepository(database.DB)
 	addrRepo := repository.NewGormRepository[domain.Address](database.DB)
-	productRepo := repository.NewGormRepository[domain.Product](database.DB)
-	categoryRepo := repository.NewGormRepository[domain.Category](database.DB)
-	variantRepo := repository.NewGormRepository[domain.ProductVariant](database.DB)
+	productRepo := repository.NewProductRepository(database.DB)
+	categoryRepo := repository.NewCategoryRepository(database.DB)
+	variantRepo := repository.NewVariantRepository(database.DB)
 	stockRepo := repository.NewGormRepository[domain.Stock](database.DB)
 	movementRepo := repository.NewGormRepository[domain.StockMovement](database.DB)
-	orderRepo := repository.NewGormRepository[domain.SalesOrder](database.DB)
+	orderRepo := repository.NewOrderRepository(database.DB)
 	sessionRepo := repository.NewGormRepository[domain.POSSession](database.DB)
 	cashMoveRepo := repository.NewGormRepository[domain.POSCashMove](database.DB)
 	poRepo := repository.NewGormRepository[domain.PurchaseOrder](database.DB)
+	supplierRepo := repository.NewSupplierRepository(database.DB)
 
 	// Services
 	authService := service.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
@@ -44,7 +45,7 @@ func main() {
 	inventoryService := service.NewInventoryService(stockRepo, movementRepo, database.DB)
 	posService := service.NewPOSService(sessionRepo, cashMoveRepo)
 	assemblyService := service.NewAssemblyService()
-	procurementService := service.NewProcurementService(poRepo)
+	procurementService := service.NewProcurementService(poRepo, supplierRepo)
 	financeService := service.NewFinanceService()
 
 	// Handlers

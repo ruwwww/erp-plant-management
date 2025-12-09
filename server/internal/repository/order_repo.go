@@ -34,3 +34,16 @@ func (r *orderRepository) GetByPOSSession(ctx context.Context, sessionID int) ([
 		Find(&orders).Error
 	return orders, err
 }
+
+func (r *orderRepository) Restore(ctx context.Context, id int) error {
+	var order domain.SalesOrder
+	if err := r.DB.WithContext(ctx).Unscoped().First(&order, id).Error; err != nil {
+		return err
+	}
+	return r.DB.WithContext(ctx).Unscoped().Model(&order).Update("DeletedAt", nil).Error
+}
+
+func (r *orderRepository) ForceDelete(ctx context.Context, id int) error {
+	var order domain.SalesOrder
+	return r.DB.WithContext(ctx).Unscoped().Delete(&order, id).Error
+}

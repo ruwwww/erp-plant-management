@@ -52,17 +52,3 @@ func NewInvoiceRepository(db *gorm.DB) InvoiceRepository {
 func (r *invoiceRepository) FindByOrder(ctx context.Context, orderID int) (*domain.Invoice, error) {
 	return r.FindOne(ctx, "sales_order_id = ?", orderID)
 }
-
-type categoryRepository struct {
-	*GormRepository[domain.Category]
-}
-
-func NewCategoryRepository(db *gorm.DB) CategoryRepository {
-	return &categoryRepository{NewGormRepository[domain.Category](db)}
-}
-func (r *categoryRepository) GetTree(ctx context.Context) ([]domain.Category, error) {
-	// In a real app, you might build the tree structure in Go code
-	// after fetching all categories, or use a recursive CTE in SQL.
-	// For now, fetching all is fine.
-	return r.FindAll(ctx)
-}
