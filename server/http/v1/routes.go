@@ -147,6 +147,15 @@ func SetupRoutes(
 		ops.Post("/procurement/po", opsH.CreatePurchaseOrder)
 		ops.Post("/procurement/po/:id/receive", opsH.ReceivePurchaseOrder) // Inbound Stock
 
+		// Suppliers (Ops can manage suppliers too)
+		ops.Get("/suppliers", opsH.GetSuppliers)
+		ops.Get("/suppliers/:id", opsH.GetSupplier)
+		ops.Post("/suppliers", opsH.CreateSupplier)
+		ops.Put("/suppliers/:id", opsH.UpdateSupplier)
+		ops.Delete("/suppliers/:id", opsH.SoftDeleteSupplier)
+		ops.Post("/suppliers/:id/restore", opsH.RestoreSupplier)
+		ops.Delete("/suppliers/:id/force", opsH.ForceDeleteSupplier)
+
 		// Fulfillment (Shipping)
 		ops.Get("/fulfillment/queue", opsH.GetFulfillmentQueue)
 		ops.Post("/fulfillment/:id/pack", opsH.PackOrder)

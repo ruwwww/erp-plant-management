@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"server/internal/core/domain"
 	"server/internal/repository"
 )
@@ -9,12 +10,14 @@ import (
 type ProcurementServiceImpl struct {
 	poRepo       repository.Repository[domain.PurchaseOrder]
 	supplierRepo repository.SupplierRepository
+	inventorySvc InventoryService
 }
 
-func NewProcurementService(poRepo repository.Repository[domain.PurchaseOrder], supplierRepo repository.SupplierRepository) ProcurementService {
+func NewProcurementService(poRepo repository.Repository[domain.PurchaseOrder], supplierRepo repository.SupplierRepository, inventorySvc InventoryService) ProcurementService {
 	return &ProcurementServiceImpl{
 		poRepo:       poRepo,
 		supplierRepo: supplierRepo,
+		inventorySvc: inventorySvc,
 	}
 }
 
@@ -32,10 +35,41 @@ func (s *ProcurementServiceImpl) ReceivePO(ctx context.Context, poID int, receiv
 		return err
 	}
 
-	// Update received quantities
-	// This is simplified. In reality, we'd need to iterate items and update them.
-	// Since we don't have easy access to update nested items via generic repo without more logic:
-	po.Status = domain.POPartiallyReceived // or Completed
+	if po.Status == domain.POCompleted || po.Status == domain.POCancelled {
+		return errors.New("cannot receive items for completed or cancelled PO")
+	}
+
+	allReceived := true
+	for i := range po.Items {
+		item := &po.Items[i]
+		if qty, ok := receivedItems[item.ID]; ok {
+			item.QuantityReceived += qty
+			if item.QuantityReceived < item.QuantityOrdered {
+				allReceived = false
+			}
+			// Create stock movement for received quantity
+			err = s.inventorySvc.ExecuteMovement(ctx, StockMoveCmd{
+				LocationID:    1, // TODO: configurable default location
+				VariantID:     item.VariantID,
+				QtyChange:     qty,
+				Reason:        domain.ReasonPurchase,
+				ReferenceID:   poID,
+				ReferenceType: "PURCHASE_ORDER",
+				UserID:        0, // TODO: get from context
+			})
+			if err != nil {
+				return err
+			}
+		} else if item.QuantityReceived < item.QuantityOrdered {
+			allReceived = false
+		}
+	}
+
+	if allReceived {
+		po.Status = domain.POCompleted
+	} else {
+		po.Status = domain.POPartiallyReceived
+	}
 
 	return s.poRepo.Update(ctx, po)
 }

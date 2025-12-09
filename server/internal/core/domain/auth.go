@@ -33,16 +33,15 @@ type Customer struct {
 }
 
 type Supplier struct {
-	ID          int        `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name        string     `gorm:"not null;size:255" json:"name"`
-	ContactName *string    `gorm:"size:255" json:"contact_name"`
-	Email       *string    `gorm:"size:320" json:"email"`
-	Phone       *string    `gorm:"size:32" json:"phone"`
-	AddressID   *int       `json:"address_id"`
-	Address     *Address   `gorm:"foreignKey:AddressID" json:"address,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	DeletedAt   *time.Time `json:"deleted_at"`
+	ID        int        `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name      string     `gorm:"not null;size:255" json:"name"`
+	Contact   *string    `gorm:"size:255" json:"contact_person"`
+	Email     *string    `gorm:"size:320" json:"email"`
+	Phone     *string    `gorm:"size:32" json:"phone"`
+	Address   *string    `gorm:"size:512" json:"address"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
 }
 
 type Address struct {

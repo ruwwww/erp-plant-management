@@ -103,6 +103,8 @@ type MovementRepository interface {
 type AssemblyRepository interface {
 	Repository[domain.StockAssembly]
 	GetRecipe(ctx context.Context, variantID int) ([]domain.ProductRecipe, error)
+	GetAllRecipes(ctx context.Context) ([]domain.ProductRecipe, error)
+	GetLogs(ctx context.Context, page, limit int) ([]domain.StockAssembly, error)
 }
 
 type SupplierRepository interface {

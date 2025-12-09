@@ -319,14 +319,17 @@ func (h *AdminHandler) CreateSupplier(c *fiber.Ctx) error {
 	supplier := &domain.Supplier{
 		Name: req.Name,
 	}
-	if req.ContactName != "" {
-		supplier.ContactName = &req.ContactName
+	if req.Contact != "" {
+		supplier.Contact = &req.Contact
 	}
 	if req.Email != "" {
 		supplier.Email = &req.Email
 	}
 	if req.Phone != "" {
 		supplier.Phone = &req.Phone
+	}
+	if req.Address != "" {
+		supplier.Address = &req.Address
 	}
 
 	if err := h.procurementService.CreateSupplier(c.Context(), supplier); err != nil {
@@ -359,14 +362,17 @@ func (h *AdminHandler) UpdateSupplier(c *fiber.Ctx) error {
 	if req.Name != "" {
 		supplier.Name = req.Name
 	}
-	if req.ContactName != "" {
-		supplier.ContactName = &req.ContactName
+	if req.Contact != "" {
+		supplier.Contact = &req.Contact
 	}
 	if req.Email != "" {
 		supplier.Email = &req.Email
 	}
 	if req.Phone != "" {
 		supplier.Phone = &req.Phone
+	}
+	if req.Address != "" {
+		supplier.Address = &req.Address
 	}
 
 	if err := h.procurementService.UpdateSupplier(c.Context(), supplier); err != nil {

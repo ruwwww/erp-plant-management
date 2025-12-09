@@ -15,6 +15,8 @@ type SalesOrder struct {
 	PaymentStatus           PaymentStatus          `gorm:"not null;default:'UNPAID'" json:"payment_status"`
 	PaymentMethod           string                 `gorm:"size:50" json:"payment_method"`
 	ShipmentStatus          ShipmentStatus         `gorm:"not null;default:'PENDING'" json:"shipment_status"`
+	Carrier                 *string                `gorm:"size:100" json:"carrier"`
+	TrackingNumber          *string                `gorm:"size:150" json:"tracking_number"`
 	POSSessionID            *int                   `json:"pos_session_id"`
 	ShippingAddressSnapshot map[string]interface{} `gorm:"type:jsonb" json:"shipping_address_snapshot"`
 	BillingAddressSnapshot  map[string]interface{} `gorm:"type:jsonb" json:"billing_address_snapshot"`

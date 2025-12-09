@@ -39,6 +39,8 @@ func main() {
 	supplierRepo := repository.NewSupplierRepository(database.DB)
 	mediaRepo := repository.NewMediaRepository(database.DB)
 	mediaLinkRepo := repository.NewMediaLinkRepository(database.DB)
+	assemblyRepo := repository.NewAssemblyRepository(database.DB)
+	recipeRepo := repository.NewRecipeRepository(database.DB)
 
 	// Services
 	authService := service.NewAuthService(userRepo, os.Getenv("JWT_SECRET"))
@@ -49,8 +51,9 @@ func main() {
 	inventoryService := service.NewInventoryService(stockRepo, movementRepo, locationRepo, database.DB)
 	orderService := service.NewOrderService(orderRepo, inventoryService, database.DB)
 	posService := service.NewPOSService(sessionRepo, cashMoveRepo)
-	assemblyService := service.NewAssemblyService()
-	procurementService := service.NewProcurementService(poRepo, supplierRepo)
+	assemblyService := service.NewAssemblyService(recipeRepo, assemblyRepo, inventoryService)
+	procurementService := service.NewProcurementService(poRepo, supplierRepo, inventoryService)
+	fulfillmentService := service.NewFulfillmentService(orderRepo)
 	financeService := service.NewFinanceService()
 	mediaService, err := service.NewMediaService(mediaRepo, mediaLinkRepo)
 	if err != nil {
@@ -62,7 +65,7 @@ func main() {
 	storeHandler := handlers.NewStoreHandler(catalogService, cartService, orderService)
 	userHandler := handlers.NewUserHandler(userService, orderService, financeService)
 	posHandler := handlers.NewPOSHandler(posService, orderService)
-	opsHandler := handlers.NewOpsHandler(inventoryService, assemblyService, procurementService)
+	opsHandler := handlers.NewOpsHandler(inventoryService, assemblyService, procurementService, fulfillmentService)
 	adminHandler := handlers.NewAdminHandler(catalogService, authService, userService, procurementService, marketingService, mediaService)
 
 	app := fiber.New()

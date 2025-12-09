@@ -155,16 +155,17 @@ type BulkImportProductsRequest struct {
 
 // --- Suppliers ---
 type CreateSupplierRequest struct {
-	Name        string `json:"name" validate:"required"`
-	ContactName string `json:"contact_name"`
-	Email       string `json:"email" validate:"omitempty,email"`
-	Phone       string `json:"phone"`
-	// Address fields could be nested or separate
+	Name    string `json:"name" validate:"required"`
+	Contact string `json:"contact_person"`
+	Email   string `json:"email" validate:"omitempty,email"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
 }
 
 type UpdateSupplierRequest struct {
-	Name        string `json:"name"`
-	ContactName string `json:"contact_name"`
-	Email       string `json:"email" validate:"omitempty,email"`
-	Phone       string `json:"phone"`
+	Name    string `json:"name"`
+	Contact string `json:"contact_person"`
+	Email   string `json:"email" validate:"omitempty,email"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
 }
