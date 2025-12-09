@@ -16,7 +16,7 @@ type InventoryServiceImpl struct {
 	db           *gorm.DB // Needed for transaction
 }
 
-func NewInventoryService(stockRepo repository.Repository[domain.Stock], movementRepo repository.Repository[domain.StockMovement], db *gorm.DB) *InventoryServiceImpl {
+func NewInventoryService(stockRepo repository.Repository[domain.Stock], movementRepo repository.Repository[domain.StockMovement], db *gorm.DB) InventoryService {
 	return &InventoryServiceImpl{
 		stockRepo:    stockRepo,
 		movementRepo: movementRepo,
@@ -24,21 +24,17 @@ func NewInventoryService(stockRepo repository.Repository[domain.Stock], movement
 	}
 }
 
-func (s *InventoryServiceImpl) GetStock(ctx context.Context, locationID, variantID int) (*domain.Stock, error) {
-	return s.stockRepo.FindOne(ctx, "location_id = ? AND variant_id = ?", locationID, variantID)
-}
-
-func (s *InventoryServiceImpl) AdjustStock(ctx context.Context, locationID, variantID, qtyChange int, reason string, refType *string, refID *int, userID *int) error {
+func (s *InventoryServiceImpl) ExecuteMovement(ctx context.Context, cmd StockMoveCmd) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		// 1. Create Movement
 		movement := &domain.StockMovement{
-			LocationID:     locationID,
-			VariantID:      variantID,
-			QuantityChange: qtyChange,
-			Reason:         reason,
-			ReferenceType:  refType,
-			ReferenceID:    refID,
-			CreatedBy:      userID,
+			LocationID:     cmd.LocationID,
+			VariantID:      cmd.VariantID,
+			QuantityChange: cmd.QtyChange,
+			Reason:         string(cmd.Reason),
+			ReferenceType:  &cmd.ReferenceType,
+			ReferenceID:    &cmd.ReferenceID,
+			CreatedBy:      &cmd.UserID,
 			CreatedAt:      time.Now(),
 		}
 		if err := tx.Create(movement).Error; err != nil {
@@ -46,19 +42,17 @@ func (s *InventoryServiceImpl) AdjustStock(ctx context.Context, locationID, vari
 		}
 
 		// 2. Update Stock
-		// Check if stock record exists
 		var stock domain.Stock
-		err := tx.Where("location_id = ? AND variant_id = ?", locationID, variantID).First(&stock).Error
+		err := tx.Where("location_id = ? AND variant_id = ?", cmd.LocationID, cmd.VariantID).First(&stock).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				// Create new stock record if adding stock
-				if qtyChange < 0 {
+				if cmd.QtyChange < 0 {
 					return errors.New("insufficient stock")
 				}
 				stock = domain.Stock{
-					LocationID: locationID,
-					VariantID:  variantID,
-					Quantity:   qtyChange,
+					LocationID: cmd.LocationID,
+					VariantID:  cmd.VariantID,
+					Quantity:   cmd.QtyChange,
 					UpdatedAt:  time.Now(),
 				}
 				if err := tx.Create(&stock).Error; err != nil {
@@ -69,8 +63,7 @@ func (s *InventoryServiceImpl) AdjustStock(ctx context.Context, locationID, vari
 			return err
 		}
 
-		// Update existing
-		newQty := stock.Quantity + qtyChange
+		newQty := stock.Quantity + cmd.QtyChange
 		if newQty < 0 {
 			return errors.New("insufficient stock")
 		}
@@ -83,4 +76,22 @@ func (s *InventoryServiceImpl) AdjustStock(ctx context.Context, locationID, vari
 
 		return nil
 	})
+}
+
+func (s *InventoryServiceImpl) TransferStock(ctx context.Context, variantID, qty, fromLocID, toLocID, userID int) error {
+	// TODO: Implement transfer logic (Deduct from source, Add to destination)
+	return nil
+}
+
+func (s *InventoryServiceImpl) GetStockLevel(ctx context.Context, variantID, locationID int) (int, error) {
+	stock, err := s.stockRepo.FindOne(ctx, "location_id = ? AND variant_id = ?", locationID, variantID)
+	if err != nil {
+		return 0, err
+	}
+	return stock.Quantity, nil
+}
+
+func (s *InventoryServiceImpl) BulkAdjustStock(ctx context.Context, cmds []StockMoveCmd) error {
+	// TODO: Implement bulk adjustment
+	return nil
 }

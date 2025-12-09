@@ -6,11 +6,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewAuthHandler(s *service.AuthService) *AuthHandler {
-	return &AuthHandler{authService: s}
+// --- Auth Handler ---
+type AuthHandlerImpl struct {
+	authService *service.AuthService
 }
 
-func (h *AuthHandler) Login(c *fiber.Ctx) error {
+func NewAuthHandler(s *service.AuthService) *AuthHandler {
+	return &AuthHandlerImpl{authService: s}
+}
+
+func (h *AuthHandlerImpl) Login(c *fiber.Ctx) error {
 	type LoginRequest struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -28,5 +33,5 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"token": token})
 }
 
-func (h *AuthHandler) Refresh(c *fiber.Ctx) error { return c.SendStatus(200) }
-func (h *AuthHandler) Logout(c *fiber.Ctx) error  { return c.SendStatus(200) }
+func (h *AuthHandlerImpl) Refresh(c *fiber.Ctx) error { return c.SendStatus(200) }
+func (h *AuthHandlerImpl) Logout(c *fiber.Ctx) error  { return c.SendStatus(200) }

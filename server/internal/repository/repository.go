@@ -6,15 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type Repository[T any] interface {
-	Create(ctx context.Context, entity *T) error
-	FindByID(ctx context.Context, id any) (*T, error)
-	FindOne(ctx context.Context, condition interface{}, args ...interface{}) (*T, error)
-	FindAll(ctx context.Context) ([]T, error)
-	Update(ctx context.Context, entity *T) error
-	Delete(ctx context.Context, id any) error
-}
-
 type GormRepository[T any] struct {
 	DB *gorm.DB
 }
