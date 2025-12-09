@@ -65,6 +65,9 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	v1.SetupRoutes(app, authHandler, storeHandler, userHandler, posHandler, opsHandler, adminHandler)
+	module := os.Getenv("APP_MODULE")
+	log.Printf("Starting application with module: %s", module)
+
+	v1.SetupRoutes(app, module, authHandler, storeHandler, userHandler, posHandler, opsHandler, adminHandler)
 	app.Listen("8080")
 }

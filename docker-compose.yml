@@ -22,7 +22,7 @@ services:
   
   # 1. Customer Fleet (Storefront)
   api_store:
-    build: ./backend
+    build: ./server
     environment:
       - APP_MODULE=store
       - DB_WRITE_HOST=db_primary
@@ -35,7 +35,7 @@ services:
 
   # 2. POS Fleet (Cashiers)
   api_pos:
-    build: ./backend
+    build: ./server
     environment:
       - APP_MODULE=pos
       - DB_WRITE_HOST=db_primary
@@ -48,7 +48,7 @@ services:
 
   # 3. Internal Fleet (Admin/Ops)
   api_internal:
-    build: ./backend
+    build: ./server
     environment:
       - APP_MODULE=internal
       - DB_WRITE_HOST=db_primary
