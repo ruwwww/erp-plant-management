@@ -62,7 +62,7 @@ type OrderRepository interface {
 	// GetFullOrder loads Items, Customer, and Payment info
 	GetFullOrder(ctx context.Context, orderNumber string) (*domain.SalesOrder, error)
 	GetFullOrderByID(ctx context.Context, id int) (*domain.SalesOrder, error)
-
+	Search(ctx context.Context, filter dto.OrderFilterParams) ([]domain.SalesOrder, int64, error)
 	GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error)
 	SoftDelete(ctx context.Context, id int) error
 	Restore(ctx context.Context, id int) error

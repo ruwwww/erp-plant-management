@@ -13,3 +13,12 @@ type ProductFilterParams struct {
 	CreatedAfter  *time.Time // gte (Start Date)
 	CreatedBefore *time.Time // lte (End Date)
 }
+
+type OrderFilterParams struct {
+	DateFrom *time.Time
+	DateTo   *time.Time
+	Status   string
+	Search   string // Order Number or Customer Name
+	Page     int
+	Limit    int
+}

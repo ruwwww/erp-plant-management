@@ -4,7 +4,6 @@ import (
 	"context"
 	"server/internal/core/domain"
 	"server/internal/dto"
-	"time"
 )
 
 // ==========================================
@@ -123,21 +122,12 @@ type OrderService interface {
 	SubmitReview(ctx context.Context, review *domain.Review) error
 
 	// Admin
-	GetOrderList(ctx context.Context, filter OrderFilterParams) ([]domain.SalesOrder, int64, error)
+	GetOrderList(ctx context.Context, filter dto.OrderFilterParams) ([]domain.SalesOrder, int64, error)
 	SoftDeleteOrder(ctx context.Context, orderID int) error
 	RestoreOrder(ctx context.Context, orderID int) error
 	ForceDeleteOrder(ctx context.Context, orderID int) error
 
 	GetByPOSSession(ctx context.Context, sessionID int) ([]domain.SalesOrder, error)
-}
-
-type OrderFilterParams struct {
-	DateFrom *time.Time
-	DateTo   *time.Time
-	Status   string
-	Search   string // Order Number or Customer Name
-	Page     int
-	Limit    int
 }
 
 type POSService interface {

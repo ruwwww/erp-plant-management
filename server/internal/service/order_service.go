@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"server/internal/core/domain"
+	"server/internal/dto"
 	"server/internal/repository"
 
 	"gorm.io/gorm"
@@ -99,37 +100,13 @@ func (s *OrderServiceImpl) ProcessReturn(ctx context.Context, orderID int, items
 	return s.orderRepo.Update(ctx, order)
 }
 
-func (s *OrderServiceImpl) GetOrderList(ctx context.Context, filter OrderFilterParams) ([]domain.SalesOrder, int64, error) {
-	// If your Generic Repo supports dynamic filtering, map it here.
-	// Otherwise, you rely on a specific Repo method.
-
-	// For now, let's assume we map it to a generic Map for the Repo
-	repoFilter := make(map[string]interface{})
-
-	if filter.Status != "" {
-		repoFilter["status"] = filter.Status
-	}
-	if filter.Search != "" {
-		repoFilter["order_number"] = filter.Search // Simplification
-	}
-
-	// Warning: Generic FindAll usually doesn't return Total Count or handle Pagination.
-	// Ideally: return s.orderRepo.Search(ctx, repoFilter, filter.Page, filter.Limit)
-
-	// Temporary fallback to FindAll to keep code compiling:
-	orders, err := s.orderRepo.FindAll(ctx)
-	return orders, int64(len(orders)), err
+func (s *OrderServiceImpl) GetOrderList(ctx context.Context, filter dto.OrderFilterParams) ([]domain.SalesOrder, int64, error) {
+	return s.orderRepo.Search(ctx, filter)
 }
 
 func (s *OrderServiceImpl) SubmitReview(ctx context.Context, review *domain.Review) error {
 	return nil // Placeholder
 }
-
-// -------------------------------------------------------
-// 4. INTERFACE MISMATCH
-// These are implemented but likely NOT in your Interface.
-// Add them to 'interfaces.go' or keep them as internal helpers.
-// -------------------------------------------------------
 
 func (s *OrderServiceImpl) SoftDeleteOrder(ctx context.Context, orderID int) error {
 	return s.orderRepo.SoftDelete(ctx, orderID)
