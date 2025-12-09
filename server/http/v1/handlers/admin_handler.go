@@ -190,15 +190,55 @@ func (h *AdminHandler) CreateStaff(c *fiber.Ctx) error {
 }
 
 func (h *AdminHandler) GetUserDetail(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	id, _ := strconv.Atoi(c.Params("id"))
+	user, err := h.userService.GetUserDetail(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+	}
+	return c.JSON(user)
 }
 
 func (h *AdminHandler) UpdateUser(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	id, _ := strconv.Atoi(c.Params("id"))
+	var req dto.UpdateProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	user, err := h.userService.GetUserDetail(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	if req.FirstName != "" {
+		user.FirstName = &req.FirstName
+	}
+	if req.LastName != "" {
+		user.LastName = &req.LastName
+	}
+	if req.Phone != "" {
+		user.Phone = &req.Phone
+	}
+
+	if err := h.userService.UpdateProfile(c.Context(), user); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "User updated"})
 }
 
 func (h *AdminHandler) UpdateUserStatus(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
+	id, _ := strconv.Atoi(c.Params("id"))
+	var req dto.UpdateUserStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if err := h.userService.UpdateUserStatus(c.Context(), id, req.IsActive); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "User status updated"})
 }
 
 func (h *AdminHandler) AdminResetPassword(c *fiber.Ctx) error {
