@@ -128,6 +128,8 @@ func SetupRoutes(
 		// Inventory Ledger
 		ops.Get("/inventory/locations", opsH.GetLocations)
 		ops.Post("/inventory/locations", opsH.CreateLocation)
+		ops.Put("/inventory/locations/:id", opsH.UpdateLocation)
+		ops.Delete("/inventory/locations/:id", opsH.DeleteLocation)
 		ops.Get("/inventory/movements", opsH.GetMovements) // The Audit Trail
 		ops.Post("/inventory/transfer", opsH.TransferStock)
 		ops.Post("/inventory/adjust", opsH.AdjustStock)

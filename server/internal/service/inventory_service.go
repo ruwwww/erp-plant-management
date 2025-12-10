@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"server/internal/core/domain"
+	"server/internal/dto"
 	"server/internal/repository"
 	"strings"
 	"time"
@@ -156,12 +157,68 @@ func (s *InventoryServiceImpl) GetMovements(ctx context.Context, variantID, loca
 	return movements, nil
 }
 
-func (s *InventoryServiceImpl) GetLocations(ctx context.Context) ([]domain.InventoryLocation, error) {
-	return s.locationRepo.FindAll(ctx)
+func (s *InventoryServiceImpl) GetLocations(ctx context.Context, filters *dto.GetLocationsRequest) ([]domain.InventoryLocation, error) {
+	query := s.db.Model(&domain.InventoryLocation{}).Preload("Address")
+
+	if filters != nil {
+		if filters.Type != "" {
+			query = query.Where("type = ?", filters.Type)
+		}
+		if filters.IsActive != nil {
+			query = query.Where("is_active = ?", *filters.IsActive)
+		}
+	}
+
+	var locations []domain.InventoryLocation
+	if err := query.Find(&locations).Error; err != nil {
+		return nil, err
+	}
+	return locations, nil
 }
 
 func (s *InventoryServiceImpl) CreateLocation(ctx context.Context, loc *domain.InventoryLocation) error {
 	return s.locationRepo.Create(ctx, loc)
+}
+
+func (s *InventoryServiceImpl) UpdateLocation(ctx context.Context, id int, updates *dto.UpdateLocationRequest) error {
+	var loc domain.InventoryLocation
+	if err := s.db.First(&loc, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("location not found")
+		}
+		return err
+	}
+
+	if updates.Name != nil {
+		loc.Name = *updates.Name
+	}
+	if updates.Code != nil {
+		loc.Code = *updates.Code
+	}
+	if updates.Type != nil {
+		loc.Type = *updates.Type
+	}
+	if updates.AddressID != nil {
+		loc.AddressID = updates.AddressID
+	}
+	if updates.IsActive != nil {
+		loc.IsActive = *updates.IsActive
+	}
+
+	return s.db.Save(&loc).Error
+}
+
+func (s *InventoryServiceImpl) DeleteLocation(ctx context.Context, id int) error {
+	// Check if location has stock
+	var count int64
+	if err := s.db.Model(&domain.Stock{}).Where("location_id = ? AND quantity > 0", id).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return errors.New("cannot delete location with active stock")
+	}
+
+	return s.db.Delete(&domain.InventoryLocation{}, id).Error
 }
 
 func (s *InventoryServiceImpl) ExportStockSnapshot(ctx context.Context) ([]byte, error) {

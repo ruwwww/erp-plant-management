@@ -5,6 +5,7 @@ import "time"
 type InventoryLocation struct {
 	ID        int      `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name      string   `gorm:"not null;size:100" json:"name"`
+	Code      string   `gorm:"not null;size:50;unique" json:"code"`
 	Type      string   `gorm:"not null;size:50" json:"type"` // WAREHOUSE, STORE
 	AddressID *int     `json:"address_id"`
 	Address   *Address `gorm:"foreignKey:AddressID" json:"address,omitempty"`

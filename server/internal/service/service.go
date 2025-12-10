@@ -183,8 +183,10 @@ type InventoryService interface {
 	BulkAdjustStock(ctx context.Context, cmds []StockMoveCmd) error
 
 	// Location Management
-	GetLocations(ctx context.Context) ([]domain.InventoryLocation, error)
+	GetLocations(ctx context.Context, filters *dto.GetLocationsRequest) ([]domain.InventoryLocation, error)
 	CreateLocation(ctx context.Context, loc *domain.InventoryLocation) error
+	UpdateLocation(ctx context.Context, id int, updates *dto.UpdateLocationRequest) error
+	DeleteLocation(ctx context.Context, id int) error
 
 	// Data
 	ExportStockSnapshot(ctx context.Context) ([]byte, error) // CSV

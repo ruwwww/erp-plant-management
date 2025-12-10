@@ -5,6 +5,7 @@ import (
 	"server/internal/dto"
 	"server/internal/service"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -27,11 +28,41 @@ func NewOpsHandler(invS service.InventoryService, asmS service.AssemblyService, 
 
 // Inventory
 func (h *OpsHandler) GetLocations(c *fiber.Ctx) error {
-	locations, err := h.inventoryService.GetLocations(c.Context())
+	var filters dto.GetLocationsRequest
+	if err := c.QueryParser(&filters); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
+	}
+
+	locations, err := h.inventoryService.GetLocations(c.Context(), &filters)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(locations)
+
+	// Convert to response DTOs
+	responses := make([]dto.LocationResponse, len(locations))
+	for i, loc := range locations {
+		responses[i] = dto.LocationResponse{
+			ID:        loc.ID,
+			Name:      loc.Name,
+			Code:      loc.Code,
+			Type:      loc.Type,
+			AddressID: loc.AddressID,
+			IsActive:  loc.IsActive,
+		}
+		if loc.Address != nil {
+			responses[i].Address = &dto.AddressResponse{
+				ID:         loc.Address.ID,
+				Line1:      loc.Address.Line1,
+				Line2:      loc.Address.Line2,
+				City:       loc.Address.City,
+				State:      loc.Address.State,
+				PostalCode: loc.Address.PostalCode,
+				Country:    loc.Address.Country,
+			}
+		}
+	}
+
+	return c.JSON(responses)
 }
 
 func (h *OpsHandler) CreateLocation(c *fiber.Ctx) error {
@@ -40,18 +71,70 @@ func (h *OpsHandler) CreateLocation(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+
 	loc := &domain.InventoryLocation{
 		Name:      req.Name,
-		Type:      "WAREHOUSE", // Default, or add to DTO
+		Code:      req.Code,
+		Type:      req.Type,
 		AddressID: req.AddressID,
-		IsActive:  true,
+		IsActive:  isActive,
 	}
 
 	if err := h.inventoryService.CreateLocation(c.Context(), loc); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(loc)
+	response := dto.LocationResponse{
+		ID:        loc.ID,
+		Name:      loc.Name,
+		Code:      loc.Code,
+		Type:      loc.Type,
+		AddressID: loc.AddressID,
+		IsActive:  loc.IsActive,
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(response)
+}
+
+func (h *OpsHandler) UpdateLocation(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid location ID"})
+	}
+
+	var req dto.UpdateLocationRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if err := h.inventoryService.UpdateLocation(c.Context(), id, &req); err != nil {
+		if err.Error() == "location not found" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Location updated successfully"})
+}
+
+func (h *OpsHandler) DeleteLocation(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid location ID"})
+	}
+
+	if err := h.inventoryService.DeleteLocation(c.Context(), id); err != nil {
+		if strings.Contains(err.Error(), "cannot delete") {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Location deleted successfully"})
 }
 
 func (h *OpsHandler) GetMovements(c *fiber.Ctx) error {
